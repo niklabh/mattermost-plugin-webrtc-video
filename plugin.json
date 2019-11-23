@@ -1,0 +1,15 @@
+{
+    "id": "mattermost-webrtc-video",
+    "name": "WebRTC Video",
+    "description": "Mattermost plugin for webRTC peer to peer video call.",
+    "version": "0.1.0",
+    "min_server_version": "5.12.0",
+    "webapp": {
+        "bundle_path": "webapp/dist/main.js"
+    },
+    "settings_schema": {
+        "header": "The WebRTC plugin for Mattermost allows users to make peer to peer video calls to user users.",
+        "settings": [],
+        "footer": "* To report an issue, make a suggestion or a contribution, [check the repository](https://github.com/niklabh/mattermost-plugin-webrtc-video)."
+    }
+}
