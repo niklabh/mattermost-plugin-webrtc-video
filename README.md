@@ -5,6 +5,18 @@ This plugin add video call capabilities to mattermost client with webrtc. Users 
 ## Getting Started
 Click on the video call button on channel header button when messaging a user.
 
+## Build
+
+Build your plugin:
+```
+make
+```
+
+This will produce a single plugin file (with support for multiple architectures) for upload to your Mattermost server:
+
+```
+dist/com.example.my-plugin.tar.gz
+```
 
 ## Contributions
 Contributions are welcome
