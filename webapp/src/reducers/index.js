@@ -2,6 +2,24 @@ import {combineReducers} from 'redux';
 
 import ActionTypes from '../action_types';
 
+const configLoaded = (state = false, action) => {
+    switch (action.type) {
+    case ActionTypes.LOAD_CONFIG:
+        return true;
+    default:
+        return state;
+    }
+};
+
+const signalhubURL = (state = '', action) => {
+    switch (action.type) {
+    case ActionTypes.LOAD_CONFIG:
+        return action.data.SignalhubURL;
+    default:
+        return state;
+    }
+};
+
 const modalVisible = (state = false, action) => {
     switch (action.type) {
     case ActionTypes.MAKE_VIDEO_CALL:
@@ -98,6 +116,8 @@ const peerAccepted = (state = false, action) => {
 };
 
 export default combineReducers({
+    configLoaded,
+    signalhubURL,
     modalVisible,
     callListening,
     callIncoming,

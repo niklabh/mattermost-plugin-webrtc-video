@@ -1,6 +1,7 @@
 import {id as pluginId} from '../manifest';
 
 export default {
+    LOAD_CONFIG: pluginId + '_load_config',
     MAKE_VIDEO_CALL: pluginId + '_make_video_call',
     RECEIVE_VIDEO_CALL: pluginId + '_receive_video_call',
     LISTEN_VIDEO_CALL: pluginId + '_listen_video_call',
