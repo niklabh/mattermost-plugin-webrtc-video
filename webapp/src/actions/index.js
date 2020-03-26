@@ -6,7 +6,6 @@ import Peer from 'simple-peer';
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import {getCurrentUser} from 'mattermost-redux/selectors/entities/users';
 
-import {config} from '../constants';
 import {id as pluginId} from 'manifest';
 
 import ActionTypes from '../action_types';
@@ -269,9 +268,8 @@ function getUserMedia(cb) {
 
 function createPeer(stream, initiator, userId, peerId) {
     return (dispatch, getState) => {
-        const peer = new Peer({initiator, wrtc, config, stream});
         const config2 = getConfig(getState());
-        const {configLoaded, signalhubURL} = getState()[`plugins-${pluginId}`];
+        const {configLoaded, signalhubURL, stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
 
         if (!configLoaded) {
             return;
@@ -281,8 +279,27 @@ function createPeer(stream, initiator, userId, peerId) {
             return;
         }
 
+        if (!stunServer) {
+            return;
+        }
+
+        if (!turnServer) {
+            return;
+        }
+
+        const iceServers = [
+            {
+                url: stunServer,
+            },
+            {
+                url: turnServer,
+                username: turnServerUsername,
+                credential: turnServerCredential,
+            },
+        ];
         const hub = signalhub(`mattermost-webrtc-video-${config2.DiagnosticId}`, signalhubURL);
 
+        const peer = new Peer({initiator, wrtc, iceServers, stream});
         gPeer = peer;
 
         hub.subscribe(userId).on('data', (signal) => {

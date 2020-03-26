@@ -20,6 +20,42 @@ const signalhubURL = (state = '', action) => {
     }
 };
 
+const stunServer = (state = '', action) => {
+    switch (action.type) {
+    case ActionTypes.LOAD_CONFIG:
+        return action.data.STUNServer;
+    default:
+        return state;
+    }
+};
+
+const turnServer = (state = '', action) => {
+    switch (action.type) {
+    case ActionTypes.LOAD_CONFIG:
+        return action.data.TURNServer;
+    default:
+        return state;
+    }
+};
+
+const turnServerUsername = (state = '', action) => {
+    switch (action.type) {
+    case ActionTypes.LOAD_CONFIG:
+        return action.data.TURNServerUsername;
+    default:
+        return state;
+    }
+};
+
+const turnServerCredential = (state = '', action) => {
+    switch (action.type) {
+    case ActionTypes.LOAD_CONFIG:
+        return action.data.TURNServerCredential;
+    default:
+        return state;
+    }
+};
+
 const modalVisible = (state = false, action) => {
     switch (action.type) {
     case ActionTypes.MAKE_VIDEO_CALL:
@@ -118,6 +154,10 @@ const peerAccepted = (state = false, action) => {
 export default combineReducers({
     configLoaded,
     signalhubURL,
+    stunServer,
+    turnServer,
+    turnServerUsername,
+    turnServerCredential,
     modalVisible,
     callListening,
     callIncoming,
