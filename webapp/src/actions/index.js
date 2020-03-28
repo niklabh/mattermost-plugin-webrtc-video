@@ -184,9 +184,12 @@ export function endCall() {
 }
 
 function getUserMedia(cb) {
-    navigator.getUserMedia({video: true, audio: true}, (stream) => {
+    navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream) => {
         cb(null, stream);
-    }, cb);
+    }).catch((e) => {
+        console.log(`Cannot initialize camera/microphone: ${e}`); //eslint-disable-line
+        cb(e, null);
+    });
 }
 
 function createPeer(stream, initiator, userId, peerId) {
