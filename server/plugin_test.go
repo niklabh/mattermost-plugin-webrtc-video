@@ -12,7 +12,11 @@ import (
 func TestHandleConfigAuth(t *testing.T) {
 	assert := assert.New(t)
 	plugin := Plugin{configuration: &configuration{
-		SignalhubURL: "http://sighub.example.com",
+		SignalhubURL:         "http://sighub.example.com",
+		STUNServer:           "stun:stun.example.com:3498",
+		TURNServer:           "turn:turn.example.com:3498",
+		TURNServerUsername:   "username",
+		TURNServerCredential: "credential",
 	}}
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/v1/config", nil)
@@ -28,13 +32,17 @@ func TestHandleConfigAuth(t *testing.T) {
 	assert.Nil(err)
 	bodyString := string(bodyBytes)
 
-	assert.Equal("{\"SignalhubURL\":\"http://sighub.example.com\"}\n", bodyString)
+	assert.Equal("{\"SignalhubURL\":\"http://sighub.example.com\",\"STUNServer\":\"stun:stun.example.com:3498\",\"TURNServer\":\"turn:turn.example.com:3498\",\"TURNServerUsername\":\"username\",\"TURNServerCredential\":\"credential\"}\n", bodyString)
 }
 
 func TestHandleConfigAnonymous(t *testing.T) {
 	assert := assert.New(t)
 	plugin := Plugin{configuration: &configuration{
-		SignalhubURL: "http://sighub.example.com",
+		SignalhubURL:         "http://sighub.example.com",
+		STUNServer:           "stun:stun.example.com:3498",
+		TURNServer:           "turn:turn.example.com:3498",
+		TURNServerUsername:   "username",
+		TURNServerCredential: "credential",
 	}}
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/v1/config", nil)

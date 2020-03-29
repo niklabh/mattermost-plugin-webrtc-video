@@ -56,12 +56,24 @@ func (p *Plugin) handleConfig(w http.ResponseWriter, r *http.Request) {
 
 	config := p.getConfiguration()
 	signalhubURL := strings.TrimSpace(config.SignalhubURL)
+	stunServer := strings.TrimSpace(config.STUNServer)
+	turnServer := strings.TrimSpace(config.TURNServer)
+	turnServerUsername := strings.TrimSpace(config.TURNServerUsername)
+	turnServerCredential := strings.TrimSpace(config.TURNServerCredential)
 
 	type ConfigJSON struct {
-		SignalhubURL string
+		SignalhubURL         string
+		STUNServer           string
+		TURNServer           string
+		TURNServerUsername   string
+		TURNServerCredential string
 	}
 	configJSON := ConfigJSON{
-		SignalhubURL: signalhubURL,
+		SignalhubURL:         signalhubURL,
+		STUNServer:           stunServer,
+		TURNServer:           turnServer,
+		TURNServerUsername:   turnServerUsername,
+		TURNServerCredential: turnServerCredential,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -2,6 +2,7 @@ package main
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -20,6 +21,18 @@ import (
 type configuration struct {
 	// Signalhub URL
 	SignalhubURL string
+
+	// STUN server
+	STUNServer string
+
+	// TURN server
+	TURNServer string
+
+	// TURN server username
+	TURNServerUsername string
+
+	// TURN server credential
+	TURNServerCredential string
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
@@ -33,6 +46,14 @@ func (c *configuration) Clone() *configuration {
 func (c *configuration) IsValid() error {
 	if len(c.SignalhubURL) == 0 {
 		return errors.New("SignalhubUrl is not configured")
+	}
+
+	if len(c.STUNServer) == 0 {
+		return errors.New("STUNServer is not configured")
+	}
+
+	if len(c.TURNServer) == 0 || !strings.HasPrefix(c.TURNServer, "turn:") {
+		return errors.New("TURNServer is not configured")
 	}
 
 	return nil
