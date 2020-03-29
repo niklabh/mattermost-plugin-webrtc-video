@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -ex
+
+podman build -t mattermost-plugin-webrtc-builder .
+podman run --rm -it -v $(pwd):/src -w /src mattermost-plugin-webrtc-builder make "$@"
