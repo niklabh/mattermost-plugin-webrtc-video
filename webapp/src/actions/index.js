@@ -51,7 +51,7 @@ export function loadConfig() {
 export function makeVideoCall(peerId) {
     return (dispatch, getState) => {
         const user = getCurrentUser(getState());
-        const config2 = getConfig(getState());
+        const config = getConfig(getState());
         const {configLoaded, signalhubURL, callIncoming, callOutgoing} = getState()[`plugins-${pluginId}`];
 
         if (!configLoaded) {
@@ -78,7 +78,7 @@ export function makeVideoCall(peerId) {
             return;
         }
 
-        const callhub = signalhub(`mattermost-webrtc-video-${config2.DiagnosticId}`, signalhubURL);
+        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
 
         console.log(`calling ${peerId}`) // eslint-disable-line
         callhub.broadcast(`call-${peerId}`, user.id);
@@ -126,7 +126,7 @@ export function receiveVideoCall(peerId) {
 
 export function listenVideoCall() {
     return (dispatch, getState) => {
-        const config2 = getConfig(getState());
+        const config = getConfig(getState());
         const {signalhubURL, configLoaded, callListening} = getState()[`plugins-${pluginId}`];
 
         if (!configLoaded) {
@@ -147,7 +147,7 @@ export function listenVideoCall() {
             return;
         }
 
-        const callhub = signalhub(`mattermost-webrtc-video-${config2.DiagnosticId}`, signalhubURL);
+        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
 
         console.log(`listening for calls for ${user.id} on ${signalhubURL}`) // eslint-disable-line
         callhub.subscribe(`call-${user.id}`).on('data', (peerId) => {
@@ -163,7 +163,7 @@ export function listenVideoCall() {
 
 function listenAccept(userId, peerId) {
     return (dispatch, getState) => {
-        const config2 = getConfig(getState());
+        const config = getConfig(getState());
         const {configLoaded, signalhubURL} = getState()[`plugins-${pluginId}`];
 
         if (!configLoaded) {
@@ -174,7 +174,7 @@ function listenAccept(userId, peerId) {
             return;
         }
 
-        const accepthub = signalhub(`mattermost-webrtc-video-${config2.DiagnosticId}`, signalhubURL);
+        const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
 
         accepthub.subscribe(`accept-${peerId}`).on('data', (acceptedUserId) => {
             const {peerAccepted} = getState()[`plugins-${pluginId}`];
@@ -209,7 +209,7 @@ function listenAccept(userId, peerId) {
 export function acceptCall() {
     return (dispatch, getState) => {
         const user = getCurrentUser(getState());
-        const config2 = getConfig(getState());
+        const config = getConfig(getState());
         const {configLoaded, signalhubURL, callPeerId} = getState()[`plugins-${pluginId}`];
 
         if (!configLoaded) {
@@ -220,7 +220,7 @@ export function acceptCall() {
             return;
         }
 
-        const accepthub = signalhub(`mattermost-webrtc-video-${config2.DiagnosticId}`, signalhubURL);
+        const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
 
         getUserMedia((error, stream) => {
             if (error) {
@@ -268,7 +268,7 @@ function getUserMedia(cb) {
 
 function createPeer(stream, initiator, userId, peerId) {
     return (dispatch, getState) => {
-        const config2 = getConfig(getState());
+        const config = getConfig(getState());
         const {configLoaded, signalhubURL, stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
 
         if (!configLoaded) {
@@ -297,7 +297,7 @@ function createPeer(stream, initiator, userId, peerId) {
                 credential: turnServerCredential,
             },
         ];
-        const hub = signalhub(`mattermost-webrtc-video-${config2.DiagnosticId}`, signalhubURL);
+        const hub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
 
         const peer = new Peer({initiator, wrtc, iceServers, stream});
         gPeer = peer;
