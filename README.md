@@ -6,6 +6,53 @@ own Signalhub, STUN and TURN servers.
 
 ## Getting Started
 
+Please add turn stun and signal hub servers in settings
+
+publicly available stun servers:
+
+stun:stun.l.google.com:19302
+stun:stun1.l.google.com:19302
+stun:stun2.l.google.com:19302
+stun:stun3.l.google.com:19302
+stun:stun4.l.google.com:19302
+stun:stun01.sipphone.com
+stun:stun.ekiga.net
+stun:stun.fwdnet.net
+stun:stun.ideasip.com
+stun:stun.iptel.org
+stun:stun.rixtelecom.se
+stun:stun.schlund.de
+stun:stunserver.org
+stun:stun.softjoys.com
+stun:stun.voiparound.com
+stun:stun.voipbuster.com
+stun:stun.voipstunt.com
+stun:stun.voxgratia.org
+stun:stun.xten.com
+
+publicly available turn servers:
+
+turn:numb.viagenie.ca
+turn:192.158.29.39:3478?transport=udp
+turn:192.158.29.39:3478?transport=tcp
+
+url: 'turn:numb.viagenie.ca'	
+credential: 'muazkh'	
+username: 'webrtc@live.com'	
+
+url: 'turn:192.158.29.39:3478?transport=udp'	
+credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA='	
+username: '28224511:1379330808'	
+
+url: 'turn:192.158.29.39:3478?transport=tcp'	
+credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA='	
+username: '28224511:1379330808'
+
+publicly available signalhub server
+
+https://baatcheet.herokuapp.com
+
+
 Click on the video call button on channel header button when messaging a user.
 
 ## Build
