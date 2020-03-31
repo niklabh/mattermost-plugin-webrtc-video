@@ -92,7 +92,6 @@ export default class AttachIssueModal extends PureComponent {
                                 id='video-player'
                                 style={style.player}
                             >
-                                <source src='static/images/tutorialTip.gif'/>
                                 {'Your browser does not support the video tag.'}
                             </video>
                         </div>
