@@ -1,31 +1,72 @@
+import axios from 'axios';
 import signalhub from 'signalhub';
 import wrtc from 'wrtc';
 import Peer from 'simple-peer';
 
+import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import {getCurrentUser} from 'mattermost-redux/selectors/entities/users';
 
-import {config} from '../constants';
 import {id as pluginId} from 'manifest';
 
 import ActionTypes from '../action_types';
 
-const callhub = signalhub('baatcheet_video', 'https://baatcheet.herokuapp.com');
-const accepthub = signalhub('baatcheet_video', 'https://baatcheet.herokuapp.com');
-const hub = signalhub('baatcheet_video', 'https://baatcheet.herokuapp.com');
+import {id} from '../manifest';
 
 let gStream;
 let gPeer;
 
+export function loadConfig() {
+    return (dispatch, getState) => {
+        const user = getCurrentUser(getState());
+
+        if (!user) {
+            return;
+        }
+
+        const {configLoaded} = getState()[`plugins-${pluginId}`];
+
+        if (configLoaded) {
+            return;
+        }
+
+        console.log('load config'); // eslint-disable-line
+
+        axios.get(`/plugins/${id}/v1/config`).then((response) => {
+            if (response.status === 200) {
+                console.log('loaded config'); // eslint-disable-line
+                dispatch({
+                    type: ActionTypes.LOAD_CONFIG,
+                    data: response.data,
+                });
+                listenVideoCall()(dispatch, getState);
+            } else {
+                console.log(`Cannot fetch plugin configuration, server returned code ${response.status}`); // eslint-disable-line
+            }
+        }).catch((e) => {
+            console.log(`Cannot fetch plugin configuration: ${e}`); // eslint-disable-line
+        });
+    };
+}
+
 export function makeVideoCall(peerId) {
     return (dispatch, getState) => {
-        const userId = getCurrentUser(getState()).id;
-        const {callIncoming, callOutgoing} = getState()[`plugins-${pluginId}`];
+        const user = getCurrentUser(getState());
+        const config = getConfig(getState());
+        const {configLoaded, signalhubURL, callIncoming, callOutgoing} = getState()[`plugins-${pluginId}`];
+
+        if (!configLoaded) {
+            return;
+        }
+
+        if (!signalhubURL) {
+            return;
+        }
 
         if (!peerId) {
             return;
         }
 
-        if (!userId) {
+        if (!user.id) {
             return;
         }
 
@@ -37,8 +78,10 @@ export function makeVideoCall(peerId) {
             return;
         }
 
+        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
+
         console.log(`calling ${peerId}`) // eslint-disable-line
-        callhub.broadcast(`call-${peerId}`, userId);
+        callhub.broadcast(`call-${peerId}`, user.id);
 
         dispatch({
             type: ActionTypes.MAKE_VIDEO_CALL,
@@ -47,20 +90,20 @@ export function makeVideoCall(peerId) {
             },
         });
 
-        listenAccpet(userId, peerId)(dispatch, getState);
+        listenAccept(user.id, peerId)(dispatch, getState);
     };
 }
 
 export function receiveVideoCall(peerId) {
     return (dispatch, getState) => {
-        const userId = getCurrentUser(getState()).id;
+        const user = getCurrentUser(getState());
         const {callIncoming, callOutgoing} = getState()[`plugins-${pluginId}`];
 
         if (!peerId) {
             return;
         }
 
-        if (!userId) {
+        if (!user.id) {
             return;
         }
 
@@ -83,9 +126,18 @@ export function receiveVideoCall(peerId) {
 
 export function listenVideoCall() {
     return (dispatch, getState) => {
-        const state = getState()[`plugins-${pluginId}`];
+        const config = getConfig(getState());
+        const {signalhubURL, configLoaded, callListening} = getState()[`plugins-${pluginId}`];
 
-        if (state.callListening) {
+        if (!configLoaded) {
+            return;
+        }
+
+        if (!signalhubURL) {
+            return;
+        }
+
+        if (callListening) {
             return;
         }
 
@@ -95,9 +147,10 @@ export function listenVideoCall() {
             return;
         }
 
-        const userId = user.id;
-        console.log(`listening for calls for ${userId}`) // eslint-disable-line
-        callhub.subscribe(`call-${userId}`).on('data', (peerId) => {
+        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
+
+        console.log(`listening for calls for ${user.id} on ${signalhubURL}`) // eslint-disable-line
+        callhub.subscribe(`call-${user.id}`).on('data', (peerId) => {
             console.log(`call from ${peerId}`); // eslint-disable-line
             receiveVideoCall(peerId)(dispatch, getState);
         });
@@ -108,16 +161,29 @@ export function listenVideoCall() {
     };
 }
 
-function listenAccpet(userId, peerId) {
+function listenAccept(userId, peerId) {
     return (dispatch, getState) => {
+        const config = getConfig(getState());
+        const {configLoaded, signalhubURL} = getState()[`plugins-${pluginId}`];
+
+        if (!configLoaded) {
+            return;
+        }
+
+        if (!signalhubURL) {
+            return;
+        }
+
+        const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
+
         accepthub.subscribe(`accept-${peerId}`).on('data', (acceptedUserId) => {
-            const state = getState()[`plugins-${pluginId}`];
+            const {peerAccepted} = getState()[`plugins-${pluginId}`];
 
             if (acceptedUserId !== userId) {
                 return;
             }
 
-            if (state.peerAccepted) {
+            if (peerAccepted) {
                 return;
             }
 
@@ -142,8 +208,19 @@ function listenAccpet(userId, peerId) {
 
 export function acceptCall() {
     return (dispatch, getState) => {
-        const userId = getCurrentUser(getState()).id;
-        const {callPeerId} = getState()[`plugins-${pluginId}`];
+        const user = getCurrentUser(getState());
+        const config = getConfig(getState());
+        const {configLoaded, signalhubURL, callPeerId} = getState()[`plugins-${pluginId}`];
+
+        if (!configLoaded) {
+            return;
+        }
+
+        if (!signalhubURL) {
+            return;
+        }
+
+        const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
 
         getUserMedia((error, stream) => {
             if (error) {
@@ -153,8 +230,8 @@ export function acceptCall() {
 
             gStream = stream;
 
-            createPeer(stream, false, userId, callPeerId)(dispatch, getState);
-            accepthub.broadcast(`accept-${userId}`, callPeerId);
+            createPeer(stream, false, user.id, callPeerId)(dispatch, getState);
+            accepthub.broadcast(`accept-${user.id}`, callPeerId);
         });
 
         dispatch({
@@ -190,9 +267,39 @@ function getUserMedia(cb) {
 }
 
 function createPeer(stream, initiator, userId, peerId) {
-    return (dispatch) => {
-        const peer = new Peer({initiator, wrtc, config, stream});
+    return (dispatch, getState) => {
+        const config = getConfig(getState());
+        const {configLoaded, signalhubURL, stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
 
+        if (!configLoaded) {
+            return;
+        }
+
+        if (!signalhubURL) {
+            return;
+        }
+
+        if (!stunServer) {
+            return;
+        }
+
+        if (!turnServer) {
+            return;
+        }
+
+        const iceServers = [
+            {
+                url: stunServer,
+            },
+            {
+                url: turnServer,
+                username: turnServerUsername,
+                credential: turnServerCredential,
+            },
+        ];
+        const hub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
+
+        const peer = new Peer({initiator, wrtc, iceServers, stream});
         gPeer = peer;
 
         hub.subscribe(userId).on('data', (signal) => {

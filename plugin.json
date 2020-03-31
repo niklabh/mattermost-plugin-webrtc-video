@@ -6,12 +6,50 @@
     "support_url": "https://github.com/niklabh/mattermost-plugin-webrtc-video/issues",
     "version": "0.2.0",
     "min_server_version": "5.12.0",
+    "server": {
+        "executables": {
+            "linux-amd64": "server/dist/plugin-linux-amd64",
+            "darwin-amd64": "server/dist/plugin-darwin-amd64",
+            "windows-amd64": "server/dist/plugin-windows-amd64.exe"
+        }
+    },
     "webapp": {
         "bundle_path": "webapp/dist/main.js"
     },
     "settings_schema": {
-        "header": "The WebRTC plugin for Mattermost allows users to make peer to peer video calls to user users.",
-        "settings": [],
+        "header": "The mattermost-webrtc-video plugin allows users to make P2P video calls.",
+        "settings": [
+            {
+                "key": "SignalhubUrl",
+                "display_name": "Signalhub URL",
+                "type": "text",
+                "help_text": "Signalhub is used for call signalling (incoming call, call received, call ended, etc.). Example: https://signalhub.example.com/"
+            },
+            {
+                "key": "STUNServer",
+                "display_name": "STUN server",
+                "type": "text",
+                "help_text": "STUN server to use for calls, conforming to RFC 3489, RFC 5389, RFC 5780 and others. Enter as 'stun:<hostname>:<port>'. STUN server should usually have public IP address and is used for NAT traversal. Example: stun:stun.example.com:3498"
+            },
+            {
+                "key": "TURNServer",
+                "display_name": "TURN server",
+                "type": "text",
+                "help_text": "TURN server to use for calls, conforming to RFC 5766, RFC 6062 and others. Enter as 'turn:<hostname>:<port>'. TURN server may be used for transferring video stream in case both peers are behind NAT. Example: turn:turn.example.com:3498"
+            },
+            {
+                "key": "TURNServerUsername",
+                "display_name": "TURN server username",
+                "type": "text",
+                "help_text": "TURN server username."
+            },
+            {
+                "key": "TURNServerCredential",
+                "display_name": "TURN server credential",
+                "type": "text",
+                "help_text": "TURN server credential (password)."
+            }
+        ],
         "footer": "* To report an issue, make a suggestion or a contribution, [check the repository](https://github.com/niklabh/mattermost-plugin-webrtc-video)."
     }
 }

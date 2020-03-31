@@ -2,7 +2,7 @@ import {id as pluginId} from './manifest';
 import Icon from './components/icon.jsx';
 import StartVideoCallModal from './components/modals/start_video_call';
 import Reducer from './reducers';
-import {makeVideoCall, listenVideoCall} from './actions';
+import {loadConfig, makeVideoCall} from './actions';
 
 export default class Plugin {
     // eslint-disable-next-line no-unused-vars
@@ -17,7 +17,7 @@ export default class Plugin {
         );
         registry.registerRootComponent(StartVideoCallModal);
 
-        listenVideoCall()(store.dispatch, store.getState);
+        loadConfig()(store.dispatch, store.getState);
     }
 }
 
