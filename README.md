@@ -1,6 +1,5 @@
 # Mattermost WebRTC video call plugin
 
-# Example:
 [![CircleCI](https://circleci.com/gh/niklabh/mattermost-plugin-webrtc-video.svg?style=svg)](https://circleci.com/gh/niklabh/mattermost-plugin-webrtc-video)
 
 This plugin add video call feature to Mattermost. The plugin uses WebRTC
