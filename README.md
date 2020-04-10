@@ -7,7 +7,7 @@ protocol built into the browser, but but you need to provide and configure your
 own Signalhub, STUN and TURN servers.
 
 
-![Webtrc plugin screenshot](https://user-images.githubusercontent.com/13119842/54380268-6adab180-4661-11e9-8470-a9c615c00041.png)
+![Webtrc plugin screenshot](https://github.com/niklabh/mattermost-plugin-webrtc-video/raw/master/assets/screen.jpg)
 
 ## Getting Started
 
