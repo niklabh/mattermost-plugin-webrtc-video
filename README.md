@@ -9,7 +9,7 @@ own Signalhub, STUN and TURN servers.
 Please add turn stun and signal hub servers in settings
 
 publicly available stun servers:
-
+```
 stun:stun.l.google.com:19302
 stun:stun1.l.google.com:19302
 stun:stun2.l.google.com:19302
@@ -29,9 +29,9 @@ stun:stun.voipbuster.com
 stun:stun.voipstunt.com
 stun:stun.voxgratia.org
 stun:stun.xten.com
-
+```
 publicly available turn servers:
-
+```
 turn:numb.viagenie.ca
 turn:192.158.29.39:3478?transport=udp
 turn:192.158.29.39:3478?transport=tcp
@@ -47,11 +47,11 @@ username: '28224511:1379330808'
 url: 'turn:192.158.29.39:3478?transport=tcp'	
 credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA='	
 username: '28224511:1379330808'
-
+```
 publicly available signalhub server
-
+```
 https://baatcheet.herokuapp.com
-
+```
 
 Click on the video call button on channel header button when messaging a user.
 
