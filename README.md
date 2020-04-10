@@ -13,9 +13,14 @@ own Signalhub, STUN and TURN servers.
 
 Add ability to do webrtc video call to another user. To start the call go to direct message. On top right click video icon. Allow permission to access microphone and camera. Other user will receive a incoming call. 
 
-## Getting Started
+# Installation
 
-Please add turn stun and signal hub servers in settings
+1. Go to https://github.com/niklabh/mattermost-plugin-webrtc-video/releases to download the latest release file in zip or tar.gz format.
+2. Upload the file through **System Console > Plugins > Management**, or manually upload it to the Mattermost server under plugin directory. See [documentation](https://docs.mattermost.com/administration/plugins.html#set-up-guide) for more details.
+
+## Configuration
+
+Please add turn stun and signal hub servers in settings. Go to **System Console > Plugins > GitHub** and add turn/stun and signalhub servers:
 
 publicly available stun servers:
 ```
