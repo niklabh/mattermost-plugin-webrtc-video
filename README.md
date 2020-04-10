@@ -9,6 +9,10 @@ own Signalhub, STUN and TURN servers.
 
 ![Webtrc plugin screenshot](https://github.com/niklabh/mattermost-plugin-webrtc-video/raw/master/assets/screen.jpg)
 
+## Features
+
+Add ability to do webrtc video call to another user. To start the call go to direct message. On top right click video icon. Allow permission to access microphone and camera. Other user will receive a incoming call. 
+
 ## Getting Started
 
 Please add turn stun and signal hub servers in settings
