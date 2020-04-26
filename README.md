@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/niklabh/mattermost-plugin-webrtc-video.svg?style=svg)](https://circleci.com/gh/niklabh/mattermost-plugin-webrtc-video)
 
-This plugin add video call feature to Mattermost. The plugin uses WebRTC
+This plugin add video call and group audio channel feature to Mattermost. The plugin uses WebRTC
 protocol built into the browser, but but you need to provide and configure your
 own Signalhub, STUN and TURN servers.
 
@@ -11,7 +11,21 @@ own Signalhub, STUN and TURN servers.
 
 ## Features
 
-Add ability to do webrtc video call to another user. To start the call go to direct message. On top right click video icon. Allow permission to access microphone and camera. Other user will receive a incoming call. 
+Add ability to do webrtc video call to another user and join a group audio channel. To start the call go to direct message. On top right click video icon. Allow permission to access microphone and camera. Other user will receive a incoming call.
+
+## Usage
+
+Configure stun/turn and signalhub servers setting as mentioned below. To start video call go to direct message and click on the video call button on channel header button on top right:
+
+![Header button screenshot](https://github.com/niklabh/mattermost-plugin-webrtc-video/raw/master/assets/header-button.png)
+
+Other user will see a incoming call:
+
+![Header button screenshot](https://github.com/niklabh/mattermost-plugin-webrtc-video/raw/master/assets/calling.png)
+
+To join audio channel click on unmute icon on top left. To start listening click on speaker icon.
+
+![Header button screenshot](https://github.com/niklabh/mattermost-plugin-webrtc-video/raw/master/assets/voice-channel.png)
 
 # Installation
 
@@ -67,7 +81,6 @@ publicly available signalhub server
 https://baatcheet.herokuapp.com
 ```
 
-Click on the video call button on channel header button when messaging a user.
 
 ## Build
 
