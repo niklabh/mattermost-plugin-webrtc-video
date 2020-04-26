@@ -54,6 +54,7 @@
     "signalhub": "^4.9.0",
     "simple-peer": "^9.5.0",
     "typescript": "3.5.3",
-    "wrtc": "^0.4.1"
+    "wrtc": "^0.4.1",
+    "webrtc-swarm": "github:tom-james-watson/webrtc-swarm"
   }
 }

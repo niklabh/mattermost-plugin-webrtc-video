@@ -1,6 +1,7 @@
 import {id as pluginId} from './manifest';
 import Icon from './components/icon.jsx';
 import StartVideoCallModal from './components/modals/start_video_call';
+import AudioModal from './components/modals/audio_group_call/audio_group_call';
 import Reducer from './reducers';
 import {loadConfig, makeVideoCall} from './actions';
 
@@ -13,10 +14,10 @@ export default class Plugin {
             (channel) => {
                 makeVideoCall(channel.teammate_id)(store.dispatch, store.getState);
             },
-            'Start Video Call'
+            'Start Video Call',
         );
         registry.registerRootComponent(StartVideoCallModal);
-
+        registry.registerLeftSidebarHeaderComponent(AudioModal);
         loadConfig()(store.dispatch, store.getState);
     }
 }
