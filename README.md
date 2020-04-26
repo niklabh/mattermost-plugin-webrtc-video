@@ -1,4 +1,4 @@
-# Mattermost WebRTC video call plugin
+# Mattermost WebRTC video/audio call plugin
 
 [![CircleCI](https://circleci.com/gh/niklabh/mattermost-plugin-webrtc-video.svg?style=svg)](https://circleci.com/gh/niklabh/mattermost-plugin-webrtc-video)
 
