@@ -15,6 +15,8 @@ import {id} from '../manifest';
 let gStream;
 let gPeer;
 
+const DEFAULT_SIGNAL_HUB_URL = 'https://baatcheet.herokuapp.com';
+
 export function loadConfig() {
     return (dispatch, getState) => {
         const user = getCurrentUser(getState());
@@ -52,15 +54,7 @@ export function makeVideoCall(peerId) {
     return (dispatch, getState) => {
         const user = getCurrentUser(getState());
         const config = getConfig(getState());
-        const {configLoaded, signalhubURL, callIncoming, callOutgoing} = getState()[`plugins-${pluginId}`];
-
-        if (!configLoaded) {
-            return;
-        }
-
-        if (!signalhubURL) {
-            return;
-        }
+        const {signalhubURL, callIncoming, callOutgoing} = getState()[`plugins-${pluginId}`];
 
         if (!peerId) {
             return;
@@ -78,7 +72,7 @@ export function makeVideoCall(peerId) {
             return;
         }
 
-        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
+        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
 
         console.log(`calling ${peerId}`) // eslint-disable-line
         callhub.broadcast(`call-${peerId}`, user.id);
@@ -127,15 +121,7 @@ export function receiveVideoCall(peerId) {
 export function listenVideoCall() {
     return (dispatch, getState) => {
         const config = getConfig(getState());
-        const {signalhubURL, configLoaded, callListening} = getState()[`plugins-${pluginId}`];
-
-        if (!configLoaded) {
-            return;
-        }
-
-        if (!signalhubURL) {
-            return;
-        }
+        const {signalhubURL, callListening} = getState()[`plugins-${pluginId}`];
 
         if (callListening) {
             return;
@@ -147,7 +133,7 @@ export function listenVideoCall() {
             return;
         }
 
-        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
+        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
 
         console.log(`listening for calls for ${user.id} on ${signalhubURL}`) // eslint-disable-line
         callhub.subscribe(`call-${user.id}`).on('data', (peerId) => {
@@ -164,17 +150,9 @@ export function listenVideoCall() {
 function listenAccept(userId, peerId) {
     return (dispatch, getState) => {
         const config = getConfig(getState());
-        const {configLoaded, signalhubURL} = getState()[`plugins-${pluginId}`];
+        const {signalhubURL} = getState()[`plugins-${pluginId}`];
 
-        if (!configLoaded) {
-            return;
-        }
-
-        if (!signalhubURL) {
-            return;
-        }
-
-        const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
+        const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
 
         accepthub.subscribe(`accept-${peerId}`).on('data', (acceptedUserId) => {
             const {peerAccepted} = getState()[`plugins-${pluginId}`];
@@ -210,17 +188,9 @@ export function acceptCall() {
     return (dispatch, getState) => {
         const user = getCurrentUser(getState());
         const config = getConfig(getState());
-        const {configLoaded, signalhubURL, callPeerId} = getState()[`plugins-${pluginId}`];
+        const {signalhubURL, callPeerId} = getState()[`plugins-${pluginId}`];
 
-        if (!configLoaded) {
-            return;
-        }
-
-        if (!signalhubURL) {
-            return;
-        }
-
-        const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
+        const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
 
         getUserMedia((error, stream) => {
             if (error) {
@@ -272,35 +242,60 @@ function getUserMedia(cb) {
 function createPeer(stream, initiator, userId, peerId) {
     return (dispatch, getState) => {
         const config = getConfig(getState());
-        const {configLoaded, signalhubURL, stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
-
-        if (!configLoaded) {
-            return;
-        }
-
-        if (!signalhubURL) {
-            return;
-        }
-
-        if (!stunServer) {
-            return;
-        }
-
-        if (!turnServer) {
-            return;
-        }
+        const {signalhubURL, stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
 
         const iceServers = [
+            {url: 'stun:stun.l.google.com:19302'},
+            {url: 'stun:stun1.l.google.com:19302'},
+            {url: 'stun:stun2.l.google.com:19302'},
+            {url: 'stun:stun3.l.google.com:19302'},
+            {url: 'stun:stun4.l.google.com:19302'},
+            {url: 'stun:stun01.sipphone.com'},
+            {url: 'stun:stun.ekiga.net'},
+            {url: 'stun:stun.fwdnet.net'},
+            {url: 'stun:stun.ideasip.com'},
+            {url: 'stun:stun.iptel.org'},
+            {url: 'stun:stun.rixtelecom.se'},
+            {url: 'stun:stun.schlund.de'},
+            {url: 'stun:stunserver.org'},
+            {url: 'stun:stun.softjoys.com'},
+            {url: 'stun:stun.voiparound.com'},
+            {url: 'stun:stun.voipbuster.com'},
+            {url: 'stun:stun.voipstunt.com'},
+            {url: 'stun:stun.voxgratia.org'},
+            {url: 'stun:stun.xten.com'},
             {
-                url: stunServer,
+                url: 'turn:numb.viagenie.ca',
+                credential: 'muazkh',
+                username: 'webrtc@live.com',
             },
             {
+                url: 'turn:turn.bistri.com:80',
+                credential: 'homeo',
+                username: 'homeo',
+            },
+            {
+                url: 'turn:turn.anyfirewall.com:443?transport=tcp',
+                credential: 'webrtc',
+                username: 'webrtc',
+            },
+        ];
+
+        if (stunServer) {
+            iceServers.push({
+                url: stunServer,
+            });
+        }
+
+        if (turnServer && turnServerUsername && turnServerCredential) {
+            iceServers.push({
                 url: turnServer,
                 username: turnServerUsername,
                 credential: turnServerCredential,
-            },
-        ];
-        const hub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL);
+            });
+        }
+
+        const hub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
 
         const peer = new Peer({initiator, wrtc, iceServers, stream});
         gPeer = peer;
