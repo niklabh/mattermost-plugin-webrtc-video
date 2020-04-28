@@ -99,7 +99,9 @@ class AudioCallPanel extends React.Component {
     }
 
     connectToSwarm(userId) {
-        const {myUuid, myUsername, configLoaded,
+        const {
+            myUuid,
+            myUsername,
             signalhubURL,
             stunServer,
             turnServer,
@@ -107,34 +109,58 @@ class AudioCallPanel extends React.Component {
             turnServerCredential} = this.state;
         const roomCode = '6e0731b0-f185-45e8-a164-62fffef3d397';
 
-        if (!configLoaded) {
-            return;
-        }
-
-        if (!signalhubURL) {
-            return;
-        }
-
-        if (!stunServer) {
-            return;
-        }
-
-        if (!turnServer) {
-            return;
-        }
-
         const iceServers = [
+            {url: 'stun:stun.l.google.com:19302'},
+            {url: 'stun:stun1.l.google.com:19302'},
+            {url: 'stun:stun2.l.google.com:19302'},
+            {url: 'stun:stun3.l.google.com:19302'},
+            {url: 'stun:stun4.l.google.com:19302'},
+            {url: 'stun:stun01.sipphone.com'},
+            {url: 'stun:stun.ekiga.net'},
+            {url: 'stun:stun.fwdnet.net'},
+            {url: 'stun:stun.ideasip.com'},
+            {url: 'stun:stun.iptel.org'},
+            {url: 'stun:stun.rixtelecom.se'},
+            {url: 'stun:stun.schlund.de'},
+            {url: 'stun:stunserver.org'},
+            {url: 'stun:stun.softjoys.com'},
+            {url: 'stun:stun.voiparound.com'},
+            {url: 'stun:stun.voipbuster.com'},
+            {url: 'stun:stun.voipstunt.com'},
+            {url: 'stun:stun.voxgratia.org'},
+            {url: 'stun:stun.xten.com'},
             {
-                url: stunServer,
+                url: 'turn:numb.viagenie.ca',
+                credential: 'muazkh',
+                username: 'webrtc@live.com',
             },
             {
-                url: turnServer,
-                username: turnServerUsername,
-                credential: turnServerCredential,
+                url: 'turn:turn.bistri.com:80',
+                credential: 'homeo',
+                username: 'homeo',
+            },
+            {
+                url: 'turn:turn.anyfirewall.com:443?transport=tcp',
+                credential: 'webrtc',
+                username: 'webrtc',
             },
         ];
 
-        const hub = signalhub(roomCode, [signalhubURL]);
+        if (stunServer) {
+            iceServers.push({
+                url: stunServer,
+            });
+        }
+
+        if (turnServer && turnServerUsername && turnServerCredential) {
+            iceServers.push({
+                url: turnServer,
+                username: turnServerUsername,
+                credential: turnServerCredential,
+            });
+        }
+
+        const hub = signalhub(roomCode, [signalhubURL || 'https://baatcheet.herokuapp.com']);
 
         hub.subscribe('all').on('data', this.handleHubData.bind(this));
 
