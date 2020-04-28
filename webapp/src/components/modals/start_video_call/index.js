@@ -9,6 +9,9 @@ import {id as pluginId} from 'manifest';
 import StartVideoCall from './start_video_call';
 
 const getPeerName = (peer) => {
+    if (!peer) {
+        return '';
+    }
     return `${peer.first_name || ''} ${peer.last_name || ''}`.trim() || peer.username || '';
 };
 
