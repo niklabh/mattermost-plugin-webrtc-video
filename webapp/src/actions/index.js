@@ -21,6 +21,7 @@ let gStream;
 let gPeer;
 let gListenSwarm;
 let gCallSwarm;
+let listenPeer;
 
 const DEFAULT_SIGNAL_HUB_URL = 'https://baatcheet.herokuapp.com';
 
@@ -217,12 +218,13 @@ export function makeVideoCall(peerId) {
                 //     this.setState({peerStreams});
                 // }
             });
-
-            peer.send(JSON.stringify({
-                type: 'sendHandshake',
-                userId: user.id,
-            }));
-
+            const {peerAccepted} = getState()[`plugins-${pluginId}`];
+            if (peerAccepted) {
+                peer.send(JSON.stringify({
+                    type: 'sendHandshake',
+                    userId: user.id,
+                }));
+            }
             peer.on('stream', (streamObj) => {
                 console.log('Stream Aayi', peer, id);
 
@@ -363,6 +365,7 @@ export function listenVideoCall() {
 
         gListenSwarm = sw;
         sw.on('peer', (peer, id) => {
+            listenPeer = peer;
             console.log('Peer aa gya', peer, id);
             peer.on('error', (error) => {
                 console.error(error); // eslint-disable-line
@@ -429,11 +432,13 @@ export function listenVideoCall() {
                 //     this.setState({peerStreams});
                 // }
             });
-
-            peer.send(JSON.stringify({
-                type: 'sendHandshake',
-                userId: user.id,
-            }));
+            const {peerAccepted} = getState()[`plugins-${pluginId}`];
+            if (peerAccepted) {
+                peer.send(JSON.stringify({
+                    type: 'sendHandshake',
+                    userId: user.id,
+                }));
+            }
 
             peer.on('stream', (streamObj) => {
                 console.log('Stream Aayi', peer, id);
@@ -488,6 +493,13 @@ function listenAccept(userId, peerId) {
             dispatch({
                 type: ActionTypes.PEER_ACCEPTED,
             });
+
+            if (listenPeer && peerAccepted) {
+                listenPeer.send(JSON.stringify({
+                    type: 'sendHandshake',
+                    userId: user.id,
+                }));
+            }
 
             console.log(`accepted from ${peerId}`); // eslint-disable-line            
         });
