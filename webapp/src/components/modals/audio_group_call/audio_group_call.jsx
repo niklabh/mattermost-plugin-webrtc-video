@@ -300,7 +300,16 @@ class AudioCallPanel extends React.Component {
         }));
     }
 
-    handleDisconnect
+    handleDisconnect(peer, id) {
+        console.info('disconnected from a peer:', peer, id);
+
+        const peerStreams = Object.assign({}, this.state.peerStreams);
+
+        if (peerStreams[id]) {
+            delete peerStreams[id];
+            this.setState({peerStreams});
+        }
+    }
 
     handleAudioToggle() {
         const {peerStreams, myStream, audioOn} = this.state;

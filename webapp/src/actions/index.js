@@ -1,3 +1,4 @@
+/* eslint-disable no-magic-numbers */
 /* eslint-disable max-nested-callbacks */
 /* eslint-disable no-console */
 /* eslint-disable no-shadow */
@@ -22,6 +23,7 @@ let gPeer;
 let gListenSwarm;
 let gCallSwarm;
 let listenPeer;
+let callPeer;
 
 const DEFAULT_SIGNAL_HUB_URL = 'https://baatcheet.herokuapp.com';
 
@@ -147,15 +149,19 @@ export function makeVideoCall(peerId) {
                     outgoingSignalingData.fromUsername = user.username;
                     return outgoingSignalingData;
                 },
+                wrtc,
             }
         );
 
         gCallSwarm = sw;
         sw.on('peer', (peer, id) => {
+            callPeer = peer;
             console.log('Peer aa gya', peer, id);
             peer.on('error', (error) => {
-                console.error(error); // eslint-disable-line
-                dispatch(endCall());
+                console.error('Error Aaya', error, Math.floor(Date.now() / 1000)
+                ); // eslint-disable-line
+                // dispatch(endCall());
+                callPeer = null;
             });
 
             peer.on('connect', () => {
@@ -166,7 +172,10 @@ export function makeVideoCall(peerId) {
             });
 
             peer.on('close', () => {
-                dispatch(endCall());
+                console.log('CLOSE');
+                callPeer = null;
+
+                // dispatch(endCall());
             });
 
             peer.on('data', (payload) => {
@@ -218,23 +227,28 @@ export function makeVideoCall(peerId) {
                 //     this.setState({peerStreams});
                 // }
             });
+
             const {peerAccepted} = getState()[`plugins-${pluginId}`];
             if (peerAccepted) {
                 peer.send(JSON.stringify({
                     type: 'sendHandshake',
                     userId: user.id,
                 }));
+            } else {
+                console.log('Handshake nhi ho paaya');
             }
+
             peer.on('stream', (streamObj) => {
                 console.log('Stream Aayi', peer, id);
 
-                // const video = document.querySelector('#video-player');
-                // video.srcObject = streamObj;
-                // video.play();
+                const video = document.querySelector('#video-player');
+                video.srcObject = streamObj;
+                video.play();
             });
         });
 
         sw.on('disconnect', (peer, id) => {
+            callPeer = null;
             console.info('disconnected from a peer:', peer, id);
 
             // dispatch(endCall());
@@ -360,16 +374,20 @@ export function listenVideoCall() {
                     outgoingSignalingData.fromUsername = user.username;
                     return outgoingSignalingData;
                 },
+                wrtc,
             }
         );
 
         gListenSwarm = sw;
         sw.on('peer', (peer, id) => {
             listenPeer = peer;
+
             console.log('Peer aa gya', peer, id);
             peer.on('error', (error) => {
-                console.error(error); // eslint-disable-line
-                dispatch(endCall());
+                console.error('Error Aaya', error, Math.floor(Date.now() / 1000)
+                ); // eslint-disable-line
+                // dispatch(endCall());
+                listenPeer = null;
             });
 
             peer.on('connect', () => {
@@ -380,7 +398,10 @@ export function listenVideoCall() {
             });
 
             peer.on('close', () => {
-                dispatch(endCall());
+                console.log('CLOSE');
+                listenPeer = null;
+
+                // dispatch(endCall());
             });
 
             peer.on('data', (payload) => {
@@ -432,25 +453,29 @@ export function listenVideoCall() {
                 //     this.setState({peerStreams});
                 // }
             });
-            const {peerAccepted} = getState()[`plugins-${pluginId}`];
-            if (peerAccepted) {
+
+            const {callAccepted} = getState()[`plugins-${pluginId}`];
+            if (callAccepted) {
                 peer.send(JSON.stringify({
                     type: 'sendHandshake',
                     userId: user.id,
                 }));
+            } else {
+                console.log('Handshake nhi ho paaya');
             }
 
             peer.on('stream', (streamObj) => {
                 console.log('Stream Aayi', peer, id);
 
-                // const video = document.querySelector('#video-player');
-                // video.srcObject = streamObj;
-                // video.play();
+                const video = document.querySelector('#video-player');
+                video.srcObject = streamObj;
+                video.play();
             });
         });
 
         sw.on('disconnect', (peer, id) => {
             console.info('disconnected from a peer:', peer, id);
+            listenPeer = null;
 
             // dispatch(endCall());
         });
@@ -481,11 +506,18 @@ function listenAccept(userId, peerId) {
 
         accepthub.subscribe(`accept-${peerId}`).on('data', (acceptedUserId) => {
             const {peerAccepted} = getState()[`plugins-${pluginId}`];
-
             if (acceptedUserId !== userId) {
                 return;
             }
-
+            console.log('listenAccept', callPeer, peerAccepted);
+            if (callPeer) {
+                callPeer.send(JSON.stringify({
+                    type: 'sendHandshake',
+                    userId: user.id,
+                }));
+            } else {
+                console.log('Handshake nhi ho paaya');
+            }
             if (peerAccepted) {
                 return;
             }
@@ -493,13 +525,6 @@ function listenAccept(userId, peerId) {
             dispatch({
                 type: ActionTypes.PEER_ACCEPTED,
             });
-
-            if (listenPeer && peerAccepted) {
-                listenPeer.send(JSON.stringify({
-                    type: 'sendHandshake',
-                    userId: user.id,
-                }));
-            }
 
             console.log(`accepted from ${peerId}`); // eslint-disable-line            
         });
@@ -510,14 +535,22 @@ export function acceptCall() {
     return (dispatch, getState) => {
         const user = getCurrentUser(getState());
         const config = getConfig(getState());
-        const {signalhubURL, callPeerId} = getState()[`plugins-${pluginId}`];
+        const {signalhubURL, callPeerId, peerAccepted} = getState()[`plugins-${pluginId}`];
 
         const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
         accepthub.subscribe('all').on('data', ({...a}) => {
             console.log('HUB DATA', a);
         });
         accepthub.broadcast(`accept-${user.id}`, callPeerId);
-
+        console.log('acceptCall', listenPeer, peerAccepted);
+        if (listenPeer) {
+            listenPeer.send(JSON.stringify({
+                type: 'sendHandshake',
+                userId: user.id,
+            }));
+        } else {
+            console.log('Handshake nhi ho paaya');
+        }
         dispatch({
             type: ActionTypes.ACCEPT_CALL,
         });
@@ -625,8 +658,9 @@ function createPeer(stream, initiator, userId, peerId) {
         });
 
         peer.on('error', (error) => {
-            console.error(error); // eslint-disable-line
-            dispatch(endCall());
+            console.error('Error Aaya', error, Math.floor(Date.now() / 1000)
+            ); // eslint-disable-line
+            // dispatch(endCall());
         });
 
         peer.on('connect', () => {
@@ -637,7 +671,9 @@ function createPeer(stream, initiator, userId, peerId) {
         });
 
         peer.on('close', () => {
-            dispatch(endCall());
+            console.log('CLOSE');
+
+            // dispatch(endCall());
         });
 
         peer.on('data', (data) => {

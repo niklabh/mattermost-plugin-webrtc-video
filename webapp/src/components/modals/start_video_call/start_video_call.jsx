@@ -1,6 +1,9 @@
+/* eslint-disable no-console */
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {Modal} from 'react-bootstrap';
+
+import ringtone from './ring.mp3';
 
 export default class AttachIssueModal extends PureComponent {
     static propTypes = {
@@ -41,9 +44,18 @@ export default class AttachIssueModal extends PureComponent {
         const {visible, peerName, accepted} = this.props;
         const style = getStyle();
 
+        console.log('Render', ringtone);
         if (!visible) {
             return null;
         }
+
+        // if (!accepted) {
+        //     const aud = new Audio('https://fsa.zobj.net/download/bSTbzdq06dBdyG61KeYQWnv8--qWV7Ziw1-s_OFFxBrahjDKcFFe8Ug9ExAWOHLprccThPcujHhPwo-MAHhE9OcfxR2ACTY-7cOo_9vTsMrrtU-yEdkiH-J3B-28/?a=web&c=72&f=hangouts_video_call.mp3&special=1588657752-m%2FLbS97Dmlc%2BtHwbFSztLq7uxR1ltKMjd5B%2FLgH9kzo%3D');
+        //     aud.loop = true;
+        //     aud.muted = true;
+        //     aud.play();
+        //     aud.muted = false;
+        // }
 
         return (
             <Modal
