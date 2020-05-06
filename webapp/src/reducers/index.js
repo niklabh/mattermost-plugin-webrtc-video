@@ -151,6 +151,81 @@ const peerAccepted = (state = false, action) => {
     }
 };
 
+const callPeerStream = (state = null, action) => {
+    switch (action.type) {
+    case ActionTypes.PEER_STREAM_RECEIVED:
+        return action.data;
+    case ActionTypes.PEER_LOST:
+        return null;
+    case ActionTypes.END_CALL:
+        return null;
+    default:
+        return state;
+    }
+};
+
+const callPeerAudioOn = (state = true, action) => {
+    switch (action.type) {
+    case ActionTypes.PEER_AUDIO_TOGGLE:
+        return action.data;
+    default:
+        return state;
+    }
+};
+
+const callPeerVideoOn = (state = true, action) => {
+    switch (action.type) {
+    case ActionTypes.PEER_VIDEO_TOGGLE:
+        return action.data;
+    default:
+        return state;
+    }
+};
+
+const selfStream = (state = null, action) => {
+    switch (action.type) {
+    case ActionTypes.SELF_STREAM_SET:
+        return action.data;
+    case ActionTypes.SELF_STREAM_UNSET:
+        return null;
+    case ActionTypes.END_CALL:
+        return null;
+    default:
+        return state;
+    }
+};
+
+const connectedPeer = (state = null, action) => {
+    switch (action.type) {
+    case ActionTypes.PEER_RECEIVED:
+        return action.data.peer;
+    case ActionTypes.PEER_LOST:
+        return null;
+    case ActionTypes.END_CALL:
+        return null;
+    default:
+        return state;
+    }
+};
+
+const audioOn = (state = true, action) => {
+    switch (action.type) {
+    case ActionTypes.AUDIO_TOGGLE:
+        return action.data;
+    default:
+        return state;
+    }
+};
+
+const videoOn = (state = true, action) => {
+    switch (action.type) {
+    case ActionTypes.VIDEO_TOGGLE:
+        return action.data;
+    default:
+        return state;
+    }
+};
+
 export default combineReducers({
     configLoaded,
     signalhubURL,
@@ -165,4 +240,11 @@ export default combineReducers({
     callAccepted,
     peerAccepted,
     callPeerId,
+    callPeerStream,
+    callPeerVideoOn,
+    callPeerAudioOn,
+    selfStream,
+    connectedPeer,
+    audioOn,
+    videoOn,
 });

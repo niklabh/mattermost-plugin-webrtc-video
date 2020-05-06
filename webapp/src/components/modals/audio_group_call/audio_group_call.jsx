@@ -5,6 +5,7 @@ import {connect} from 'react-redux';
 import React from 'react';
 import {bindActionCreators} from 'redux';
 import {getCurrentUser, getProfiles} from 'mattermost-redux/selectors/entities/users';
+import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import PropTypes from 'prop-types';
 import signalhub from 'signalhub';
 import swarm from 'webrtc-swarm';
@@ -56,7 +57,9 @@ class AudioCallPanel extends React.Component {
             stunServer,
             turnServer,
             turnServerUsername,
-            turnServerCredential} = props;
+            turnServerCredential,
+            config,
+        } = props;
 
         this.state = {
             initialized: false,
@@ -79,9 +82,9 @@ class AudioCallPanel extends React.Component {
             turnServer,
             turnServerUsername,
             turnServerCredential,
+            config,
         };
 
-        console.log('PROPS', props, this.state);
     }
 
     async handleRequestPerms() {
@@ -106,8 +109,10 @@ class AudioCallPanel extends React.Component {
             stunServer,
             turnServer,
             turnServerUsername,
-            turnServerCredential} = this.state;
-        const roomCode = '6e0731b0-f185-45e8-a164-62fffef3d397';
+            turnServerCredential,
+            config,
+        } = this.state;
+        const roomCode = `mattermost-webrtc-video-${config.DiagnosticId}`;
 
         const iceServers = [
             {url: 'stun:stun.l.google.com:19302'},
@@ -350,7 +355,7 @@ class AudioCallPanel extends React.Component {
         } = this.state;
         const style = getStyle();
 
-        console.log('FILHAAL', userId, initialized, swarmInitialized, this.state, this.props);
+        console.log('Render', userId, initialized, swarmInitialized, this.state, this.props);
 
         if (audioOn && !initialized) {
             this.handleRequestPerms();
@@ -399,6 +404,7 @@ const mapStateToProps = (state) => {
     const currentUser = getCurrentUser(state);
     const profiles = getProfiles(state);
     const {configLoaded, signalhubURL, stunServer, turnServer, turnServerUsername, turnServerCredential} = state[`plugins-${pluginId}`];
+    const config = getConfig(state);
 
     return {
         userId: currentUser.id,
@@ -411,6 +417,7 @@ const mapStateToProps = (state) => {
         turnServer,
         turnServerUsername,
         turnServerCredential,
+        config,
     };
 };
 

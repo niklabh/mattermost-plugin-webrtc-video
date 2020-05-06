@@ -2,7 +2,7 @@ import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {getCurrentUser, getUsers} from 'mattermost-redux/selectors/entities/users';
 
-import {acceptCall, rejectCall, endCall} from '../../../actions';
+import {acceptCall, rejectCall, endCall, audioToggle, videoToggle} from '../../../actions';
 
 import {id as pluginId} from 'manifest';
 
@@ -29,6 +29,15 @@ const mapStateToProps = (state) => {
         outgoing: state[`plugins-${pluginId}`].callOutgoing,
         incoming: state[`plugins-${pluginId}`].callIncoming,
         accepted: state[`plugins-${pluginId}`].callAccepted,
+        peerAccepted: state[`plugins-${pluginId}`].peerAccepted,
+        peerStream: state[`plugins-${pluginId}`].callPeerStream,
+        callPeerAudioOn: state[`plugins-${pluginId}`].callPeerAudioOn,
+        callPeerVideoOn: state[`plugins-${pluginId}`].callPeerVideoOn,
+        connectedPeer: state[`plugins-${pluginId}`].connectedPeer,
+        selfStream: state[`plugins-${pluginId}`].selfStream,
+        audioOn: state[`plugins-${pluginId}`].audioOn,
+        videoOn: state[`plugins-${pluginId}`].videoOn,
+
     };
 };
 
@@ -36,6 +45,8 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
     acceptCall,
     rejectCall,
     endCall,
+    audioToggle,
+    videoToggle,
 }, dispatch);
 
 export default connect(mapStateToProps, mapDispatchToProps)(StartVideoCall);
