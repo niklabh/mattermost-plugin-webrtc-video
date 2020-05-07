@@ -2,7 +2,6 @@ package main
 
 import (
 	"reflect"
-	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -46,18 +45,6 @@ func (c *configuration) Clone() *configuration {
 
 // IsValid checks if all needed fields are set.
 func (c *configuration) IsValid() error {
-	if len(c.SignalhubURL) == 0 {
-		return errors.New("SignalhubUrl is not configured")
-	}
-
-	if len(c.STUNServer) == 0 {
-		return errors.New("STUNServer is not configured")
-	}
-
-	if len(c.TURNServer) == 0 || !strings.HasPrefix(c.TURNServer, "turn:") {
-		return errors.New("TURNServer is not configured")
-	}
-
 	return nil
 }
 

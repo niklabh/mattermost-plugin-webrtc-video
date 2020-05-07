@@ -4,7 +4,7 @@
     "description": "Mattermost plugin for webRTC peer to peer video call.",
     "homepage_url": "https://github.com/niklabh/mattermost-plugin-webrtc-video",
     "support_url": "https://github.com/niklabh/mattermost-plugin-webrtc-video/issues",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "min_server_version": "5.12.0",
     "server": {
         "executables": {

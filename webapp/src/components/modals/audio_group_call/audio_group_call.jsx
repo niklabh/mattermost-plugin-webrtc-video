@@ -84,7 +84,6 @@ class AudioCallPanel extends React.Component {
             turnServerCredential,
             config,
         };
-
     }
 
     async handleRequestPerms() {
