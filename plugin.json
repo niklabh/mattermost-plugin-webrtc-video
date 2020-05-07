@@ -48,6 +48,13 @@
                 "display_name": "TURN server credential",
                 "type": "text",
                 "help_text": "TURN server credential (password)."
+            },
+            {
+                "key": "debugSetting",
+                "display_name": "Debug",
+                "type": "bool",
+                "help_text": "If checked, will display logs in Developer Tools",
+                "default": false
             }
         ],
         "footer": "* To report an issue, make a suggestion or a contribution, [check the repository](https://github.com/niklabh/mattermost-plugin-webrtc-video)."

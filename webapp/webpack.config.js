@@ -1,5 +1,7 @@
 var path = require('path');
 
+// const SRC = path.resolve(__dirname, 'node_modules');
+
 module.exports = {
     entry: [
         './src/index.js',
@@ -11,6 +13,7 @@ module.exports = {
         ],
         extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
     },
+    devtool: 'inline-source-map',
     module: {
         rules: [
             {
@@ -48,6 +51,10 @@ module.exports = {
                         ],
                     },
                 },
+            },
+            {
+                test: /\.(wav|mp3)$/,
+                loader: 'file-loader',
             },
         ],
     },
