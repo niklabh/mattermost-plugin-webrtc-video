@@ -112,7 +112,7 @@ class AudioCallPanel extends React.Component {
             config,
         } = this.state;
         const roomCode = `mattermost-webrtc-video-${config.DiagnosticId}`;
-
+        console.log('Room', roomCode);
         const iceServers = [
             {url: 'stun:stun.l.google.com:19302'},
             {url: 'stun:stun1.l.google.com:19302'},
@@ -381,6 +381,16 @@ class AudioCallPanel extends React.Component {
                     />
                 </div>
                 <ul style={style.list}>
+                    {swarmInitialized && (
+                        <li
+                            style={style.listItem}
+
+                            key={0}
+                        >
+                            <i
+                                className={'icon fa fa-circle'}
+                                style={style.online}
+                            />{'You'}</li>)}
                     {Object.keys(peerStreams).map((id) => {
                         return (
                             <li

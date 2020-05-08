@@ -63,7 +63,7 @@ export default class AttachIssueModal extends PureComponent {
     render() {
         const {visible, incoming, outgoing, peerName, accepted, callPeerAudioOn, callPeerVideoOn, peerStream, peerAccepted, audioOn, videoOn} = this.props;
         const style = getStyle();
-        console.log('FILHAAL@', this.props, this.state);
+        console.log('OnRender', this.props, this.state);
 
         console.log('Render', ringtone);
         if (!visible) {
