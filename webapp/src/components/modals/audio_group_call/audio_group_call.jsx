@@ -2,7 +2,6 @@
 /* eslint-disable no-shadow */
 import {connect} from 'react-redux';
 import React from 'react';
-import {bindActionCreators} from 'redux';
 import {getCurrentUser, getProfiles} from 'mattermost-redux/selectors/entities/users';
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import PropTypes from 'prop-types';
@@ -10,9 +9,6 @@ import signalhub from 'signalhub';
 import swarm from 'webrtc-swarm';
 
 import debug from '../../../utils/debug';
-
-import {initializeMyAudio, audioConnectToSwarm} from '../../../actions';
-
 import {id as pluginId} from 'manifest';
 
 async function getMediaStream(opts) {
@@ -430,9 +426,7 @@ const mapStateToProps = (state) => {
     };
 };
 
-const mapDispatchToProps = (dispatch) => bindActionCreators({initializeMyAudio, audioConnectToSwarm}, dispatch);
-
-export default connect(mapStateToProps, mapDispatchToProps)(AudioCallPanel);
+export default connect(mapStateToProps)(AudioCallPanel);
 
 const getStyle = () => ({
     button: {
