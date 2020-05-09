@@ -1,6 +1,5 @@
 /* eslint-disable no-magic-numbers */
 /* eslint-disable max-nested-callbacks */
-/* eslint-disable no-console */
 /* eslint-disable no-shadow */
 /* eslint-disable no-unused-vars */
 import axios from 'axios';
@@ -307,7 +306,7 @@ function listenAccept(userId, peerId) {
                     cPeer = peer;
 
                     const data = JSON.parse(payload.toString());
-                    console.info('received data', {id, data});
+                    debug('received data', {id, data});
 
                     if (data.type === 'receivedHandshake') {
                         getUserMedia((error, stream) => {
@@ -366,7 +365,7 @@ function listenAccept(userId, peerId) {
             });
 
             sw.on('disconnect', (peer, id) => {
-                console.info('disconnected from a peer:', peer, id);
+                debug('disconnected from a peer:', peer, id);
                 cPeer = null;
                 dispatch({
                     type: ActionTypes.PEER_LOST,
@@ -470,7 +469,7 @@ export function acceptCall() {
 
                 const data = JSON.parse(payload.toString());
 
-                console.info('received data', {id, data});
+                debug('received data', {id, data});
 
                 if (data.type === 'receivedHandshake') {
                     getUserMedia((error, stream) => {
@@ -530,7 +529,7 @@ export function acceptCall() {
         });
 
         sw.on('disconnect', (peer, id) => {
-            console.info('disconnected from a peer:', peer, id);
+            debug('disconnected from a peer:', peer, id);
             cPeer = null;
             dispatch({
                 type: ActionTypes.PEER_LOST,

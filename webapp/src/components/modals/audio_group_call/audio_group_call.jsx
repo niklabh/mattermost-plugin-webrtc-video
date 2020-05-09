@@ -113,7 +113,7 @@ class AudioCallPanel extends React.Component {
             config,
         } = this.state;
         const roomCode = `mattermost-webrtc-video-${config.DiagnosticId}`;
-        console.log('Room', roomCode);
+        debug('Room', roomCode);
         const iceServers = [
             {url: 'stun:stun.l.google.com:19302'},
             {url: 'stun:stun1.l.google.com:19302'},
@@ -349,7 +349,6 @@ class AudioCallPanel extends React.Component {
     }
 
     render() {
-        // eslint-disable-next-line no-console
         const {
             userId, initialized, swarmInitialized, audioOn, speakerOn, peerStreams,
         } = this.state;
