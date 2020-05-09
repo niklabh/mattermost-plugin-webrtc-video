@@ -32,8 +32,6 @@ type configuration struct {
 
 	// TURN server credential
 	TURNServerCredential string
-
-	debugSetting bool
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
