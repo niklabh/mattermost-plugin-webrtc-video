@@ -1,6 +1,6 @@
 {
   "name": "mattermost-plugin-webrtc-video",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Frontend for webrtc video audio call plugin.",
   "main": "src/index.js",
   "scripts": {
