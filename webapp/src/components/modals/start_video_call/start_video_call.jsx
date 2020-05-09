@@ -1,9 +1,8 @@
-/* eslint-disable no-console */
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {Modal} from 'react-bootstrap';
 
-import ringtone from './ring.mp3';
+import debug from '../../../utils/debug';
 
 export default class AttachIssueModal extends PureComponent {
     static propTypes = {
@@ -63,16 +62,16 @@ export default class AttachIssueModal extends PureComponent {
     render() {
         const {visible, incoming, outgoing, peerName, accepted, callPeerAudioOn, callPeerVideoOn, peerStream, peerAccepted, audioOn, videoOn} = this.props;
         const style = getStyle();
-        console.log('FILHAAL@', this.props, this.state);
+        debug('[start_video_call] props', this.props);
+        debug('[start_video_call] state', this.state);
 
-        console.log('Render', ringtone);
         if (!visible) {
             return null;
         }
 
         // if (!accepted) {
         //     const aud = new Audio(ringtone);
-        //     console.log('AUDIO', aud);
+        //     debug('AUDIO', aud);
         //     aud.loop = true;
         //     aud.crossOrigin = 'anonymous';
         //     aud.muted = true;
