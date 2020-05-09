@@ -1,6 +1,5 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-shadow */
-/* eslint-disable no-console */
 import {connect} from 'react-redux';
 import React from 'react';
 import {bindActionCreators} from 'redux';
@@ -9,6 +8,8 @@ import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import PropTypes from 'prop-types';
 import signalhub from 'signalhub';
 import swarm from 'webrtc-swarm';
+
+import debug from '../../../utils/debug';
 
 import {initializeMyAudio, audioConnectToSwarm} from '../../../actions';
 
@@ -28,13 +29,13 @@ async function getMyStream() {
     };
 
     try {
-        console.log('try just audio');
+        debug('try just audio');
 
         // If that fails, try just audio
         const stream = await getMediaStream({audio});
         return {myStream: stream, audioEnabled: true, videoEnabled: false};
     } catch (err) {
-        console.error(err);
+        debug(err);
 
         return {myStream: null, audioEnabled: false, videoEnabled: false};
     }
@@ -88,7 +89,7 @@ class AudioCallPanel extends React.Component {
 
     async handleRequestPerms() {
         const {myStream, audioEnabled, videoEnabled} = await getMyStream();
-        console.log({audioEnabled, videoEnabled});
+        debug({audioEnabled, videoEnabled});
         this.setState({initialized: true, myStream, audioEnabled, videoEnabled});
     }
 
@@ -185,7 +186,7 @@ class AudioCallPanel extends React.Component {
         sw.on('peer', this.handleConnect.bind(this));
 
         sw.on('disconnect', this.handleDisconnect.bind(this));
-        console.log('Before Broadcast', myUsername);
+        debug('Before Broadcast', myUsername);
 
         // Send initial connect signal
         hub.broadcast(
@@ -207,10 +208,10 @@ class AudioCallPanel extends React.Component {
         if (!swarmInitialized) {
             this.setState({swarmInitialized: true});
         }
-        console.log('HUB DATA', message);
+        debug('HUB DATA', message);
         if (message.type === 'connect' && message.from !== myUuid) {
             if (!peerStreams[message.from] && message.fromUsername) {
-                console.info('connecting to', {uuid: message.from, userId: message.fromUserId, username: message.fromUsername});
+                debug('connecting to', {uuid: message.from, userId: message.fromUserId, username: message.fromUsername});
 
                 const newPeerStreams = Object.assign({}, peerStreams);
                 newPeerStreams[message.from] = {userId: message.fromUserId, username: message.fromUsername};
@@ -232,7 +233,7 @@ class AudioCallPanel extends React.Component {
     handleConnect(peer, id) {
         const {userId, audioOn, videoOn, audioEnabled, videoEnabled} = this.state;
 
-        console.info('connected to a new peer:', {id, peer});
+        debug('connected to a new peer:', {id, peer});
 
         const peerStreams = Object.assign({}, this.state.peerStreams);
         const pkg = {
@@ -245,7 +246,7 @@ class AudioCallPanel extends React.Component {
 
         peer.on('stream', (stream) => {
             const peerStreams = Object.assign({}, this.state.peerStreams);
-            console.info('received stream', stream);
+            debug('received stream', stream);
             peerStreams[id].stream = stream;
             this.setState({peerStreams});
             const playBacks = Object.assign({}, this.state.playBacks);
@@ -262,7 +263,7 @@ class AudioCallPanel extends React.Component {
 
             const data = JSON.parse(payload.toString());
 
-            console.info('received data', {id, data});
+            debug('received data', {id, data});
 
             if (data.type === 'receivedHandshake') {
                 if (myStream) {
@@ -305,7 +306,7 @@ class AudioCallPanel extends React.Component {
     }
 
     handleDisconnect(peer, id) {
-        console.info('disconnected from a peer:', peer, id);
+        debug('disconnected from a peer:', peer, id);
 
         const peerStreams = Object.assign({}, this.state.peerStreams);
 
@@ -333,13 +334,13 @@ class AudioCallPanel extends React.Component {
     }
 
     handleSpeakerToggle() {
-        console.log('Handle Speaker Toggle');
+        debug('Handle Speaker Toggle');
         const {playBacks, speakerOn} = this.state;
 
         for (const id of Object.keys(playBacks)) {
             const aud = playBacks[id];
             aud.muted = speakerOn;
-            console.log(id, 'Speaker On', aud.muted);
+            debug(id, 'Speaker On', aud.muted);
         }
 
         this.setState({
@@ -354,7 +355,7 @@ class AudioCallPanel extends React.Component {
         } = this.state;
         const style = getStyle();
 
-        console.log('Render', userId, initialized, swarmInitialized, this.state, this.props);
+        debug('Render', userId, initialized, swarmInitialized, this.state, this.props);
 
         if (audioOn && !initialized) {
             this.handleRequestPerms();

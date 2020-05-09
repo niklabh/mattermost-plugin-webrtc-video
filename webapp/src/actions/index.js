@@ -19,6 +19,7 @@ import {id as pluginId} from 'manifest';
 import ActionTypes from '../action_types';
 
 import {id} from '../manifest';
+import debug from '../utils/debug';
 
 let gStream;
 let gPeer;
@@ -40,21 +41,21 @@ export function loadConfig() {
             return;
         }
 
-        console.log('load config'); // eslint-disable-line
+        debug('load config');
 
         axios.get(`/plugins/${id}/v1/config`).then((response) => {
             if (response.status === 200) {
-                console.log('loaded config',response.data); // eslint-disable-line
+                debug('loaded config', response.data);
                 dispatch({
                     type: ActionTypes.LOAD_CONFIG,
                     data: response.data,
                 });
                 listenVideoCall()(dispatch, getState);
             } else {
-                console.log(`Cannot fetch plugin configuration, server returned code ${response.status}`); // eslint-disable-line
+                debug(`Cannot fetch plugin configuration, server returned code ${response.status}`);
             }
         }).catch((e) => {
-            console.log(`Cannot fetch plugin configuration: ${e}`); // eslint-disable-line
+            debug(`Cannot fetch plugin configuration: ${e}`);
         });
     };
 }
@@ -135,7 +136,7 @@ export function makeVideoCall(peerId) {
         }
         const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}-call-${peerId}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
 
-        console.log(`calling ${peerId}`) // eslint-disable-line
+        debug(`calling ${peerId}`);
         callhub.broadcast(`call-${peerId}`, user.id);
 
         dispatch({
@@ -197,9 +198,9 @@ export function listenVideoCall() {
 
         const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}-call-${user.id}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
 
-        console.log(`listening for calls for ${user.id} on ${signalhubURL}`) // eslint-disable-line
+        debug(`listening for calls for ${user.id} on ${signalhubURL}`);
         callhub.subscribe(`call-${user.id}`).on('data', (peerId) => {
-            console.log(`call from ${peerId}`); // eslint-disable-line
+            debug(`call from ${peerId}`);
             receiveVideoCall(peerId)(dispatch, getState);
         });
 
@@ -218,7 +219,7 @@ function listenAccept(userId, peerId) {
 
         const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
         accepthub.subscribe('all').on('data', ({...a}) => {
-            console.log('HUB DATA', a);
+            debug('HUB DATA', a);
         });
 
         accepthub.subscribe(`accept-${peerId}`).on('data', (acceptedUserId) => {
@@ -300,7 +301,7 @@ function listenAccept(userId, peerId) {
             );
 
             sw.on('peer', (peer, id) => {
-                console.log('Peer ', peer, id);
+                debug('Peer ', peer, id);
 
                 peer.on('data', (payload) => {
                     cPeer = peer;
@@ -311,7 +312,7 @@ function listenAccept(userId, peerId) {
                     if (data.type === 'receivedHandshake') {
                         getUserMedia((error, stream) => {
                             if (error) {
-                            console.error(error); // eslint-disable-line
+                                debug(error);
                                 return;
                             }
 
@@ -331,7 +332,7 @@ function listenAccept(userId, peerId) {
                     }
 
                     if (data.type === 'audioToggle') {
-                        console.log('audio toggle', data.enabled);
+                        debug('audio toggle', data.enabled);
 
                         dispatch({
                             type: ActionTypes.PEER_AUDIO_TOGGLE,
@@ -340,7 +341,7 @@ function listenAccept(userId, peerId) {
                     }
 
                     if (data.type === 'videoToggle') {
-                        console.log('video toggle', data.enabled);
+                        debug('video toggle', data.enabled);
 
                         dispatch({
                             type: ActionTypes.PEER_VIDEO_TOGGLE,
@@ -348,7 +349,7 @@ function listenAccept(userId, peerId) {
                         });
                     }
                 });
-                console.log('Sending Handshake');
+                debug('Sending Handshake');
                 peer.send(JSON.stringify({
                     type: 'sendHandshake',
                     userId: user.id,
@@ -356,7 +357,7 @@ function listenAccept(userId, peerId) {
 
                 peer.on('stream', (streamObj) => {
                     currentStream = streamObj;
-                    console.log('Stream', peer, id);
+                    debug('Stream', peer, id);
                     dispatch({
                         type: ActionTypes.PEER_STREAM_RECEIVED,
                         data: streamObj,
@@ -376,7 +377,7 @@ function listenAccept(userId, peerId) {
                 type: ActionTypes.PEER_ACCEPTED,
             });
 
-            console.log(`accepted from ${peerId}`); // eslint-disable-line            
+            debug(`accepted from ${peerId}`);
         });
     };
 }
@@ -389,10 +390,10 @@ export function acceptCall() {
 
         const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
         accepthub.subscribe('all').on('data', ({...a}) => {
-            console.log('HUB DATA', a);
+            debug('HUB DATA', a);
         });
         accepthub.broadcast(`accept-${user.id}`, callPeerId);
-        console.log('acceptCall', peerAccepted);
+        debug('acceptCall', peerAccepted);
         const {stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
 
         const iceServers = [
@@ -462,7 +463,7 @@ export function acceptCall() {
         );
 
         sw.on('peer', (peer, id) => {
-            console.log('Peer', typeof peer.hasOwnProperty, id);
+            debug('Peer', typeof peer.hasOwnProperty, id);
 
             peer.on('data', (payload) => {
                 cPeer = peer;
@@ -474,7 +475,7 @@ export function acceptCall() {
                 if (data.type === 'receivedHandshake') {
                     getUserMedia((error, stream) => {
                         if (error) {
-                            console.error(error); // eslint-disable-line
+                            debug(error);
                             return;
                         }
 
@@ -494,7 +495,7 @@ export function acceptCall() {
                 }
 
                 if (data.type === 'audioToggle') {
-                    console.log('audio toggle', data.enabled);
+                    debug('audio toggle', data.enabled);
 
                     dispatch({
                         type: ActionTypes.PEER_AUDIO_TOGGLE,
@@ -503,7 +504,7 @@ export function acceptCall() {
                 }
 
                 if (data.type === 'videoToggle') {
-                    console.log('video toggle', data.enabled);
+                    debug('video toggle', data.enabled);
 
                     dispatch({
                         type: ActionTypes.PEER_VIDEO_TOGGLE,
@@ -511,7 +512,7 @@ export function acceptCall() {
                     });
                 }
             });
-            console.log('Sending Handshake');
+            debug('Sending Handshake');
             peer.send(JSON.stringify({
                 type: 'sendHandshake',
                 userId: user.id,
@@ -520,7 +521,7 @@ export function acceptCall() {
             peer.on('stream', (streamObj) => {
                 currentStream = streamObj;
 
-                console.log('Stream', peer, id);
+                debug('Stream', peer, id);
                 dispatch({
                     type: ActionTypes.PEER_STREAM_RECEIVED,
                     data: streamObj,
@@ -565,7 +566,7 @@ function getUserMedia(cb) {
     navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream) => {
         cb(null, stream);
     }).catch((e) => {
-        console.log(`Cannot initialize camera/microphone: ${e}`); //eslint-disable-line
+        debug(`Cannot initialize camera/microphone: ${e}`); //eslint-disable-line
         cb(e, null);
     });
 }
