@@ -3,7 +3,7 @@
 [![CircleCI](https://circleci.com/gh/niklabh/mattermost-plugin-webrtc-video.svg?style=svg)](https://circleci.com/gh/niklabh/mattermost-plugin-webrtc-video)
 
 This plugin add video call and group audio channel feature to Mattermost. The plugin uses WebRTC
-protocol built into the browser, but but you need to provide and configure your
+protocol built into the browser, but you need to provide and configure your
 own Signalhub, STUN and TURN servers.
 
 
@@ -29,7 +29,7 @@ To join audio channel click on unmute icon on top left. To start listening click
 
 # Installation
 
-1. Go to https://github.com/niklabh/mattermost-plugin-webrtc-video/releases to download the latest release file in zip or tar.gz format.
+1. Go to https://github.com/niklabh/mattermost-plugin-webrtc-video/releases to download the latest release file in `.zip` or `.tar.gz` format.
 2. Upload the file through **System Console > Plugins > Management**, or manually upload it to the Mattermost server under plugin directory. See [documentation](https://docs.mattermost.com/administration/plugins.html#set-up-guide) for more details.
 
 ## Configuration
