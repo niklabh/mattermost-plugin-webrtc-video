@@ -83,42 +83,45 @@ export function makeVideoCall(peerId) {
 
         const {stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
 
-        const iceServers = [
-            {url: 'stun:stun.l.google.com:19302'},
-            {url: 'stun:stun1.l.google.com:19302'},
-            {url: 'stun:stun2.l.google.com:19302'},
-            {url: 'stun:stun3.l.google.com:19302'},
-            {url: 'stun:stun4.l.google.com:19302'},
-            {url: 'stun:stun01.sipphone.com'},
-            {url: 'stun:stun.ekiga.net'},
-            {url: 'stun:stun.fwdnet.net'},
-            {url: 'stun:stun.ideasip.com'},
-            {url: 'stun:stun.iptel.org'},
-            {url: 'stun:stun.rixtelecom.se'},
-            {url: 'stun:stun.schlund.de'},
-            {url: 'stun:stunserver.org'},
-            {url: 'stun:stun.softjoys.com'},
-            {url: 'stun:stun.voiparound.com'},
-            {url: 'stun:stun.voipbuster.com'},
-            {url: 'stun:stun.voipstunt.com'},
-            {url: 'stun:stun.voxgratia.org'},
-            {url: 'stun:stun.xten.com'},
-            {
-                url: 'turn:numb.viagenie.ca',
-                credential: 'muazkh',
-                username: 'webrtc@live.com',
-            },
-            {
-                url: 'turn:turn.bistri.com:80',
-                credential: 'homeo',
-                username: 'homeo',
-            },
-            {
-                url: 'turn:turn.anyfirewall.com:443?transport=tcp',
-                credential: 'webrtc',
-                username: 'webrtc',
-            },
-        ];
+        const iceServers = [];
+        if (!stunServer && !turnServer) {
+            iceServers.concat([
+                {url: 'stun:stun.l.google.com:19302'},
+                {url: 'stun:stun1.l.google.com:19302'},
+                {url: 'stun:stun2.l.google.com:19302'},
+                {url: 'stun:stun3.l.google.com:19302'},
+                {url: 'stun:stun4.l.google.com:19302'},
+                {url: 'stun:stun01.sipphone.com'},
+                {url: 'stun:stun.ekiga.net'},
+                {url: 'stun:stun.fwdnet.net'},
+                {url: 'stun:stun.ideasip.com'},
+                {url: 'stun:stun.iptel.org'},
+                {url: 'stun:stun.rixtelecom.se'},
+                {url: 'stun:stun.schlund.de'},
+                {url: 'stun:stunserver.org'},
+                {url: 'stun:stun.softjoys.com'},
+                {url: 'stun:stun.voiparound.com'},
+                {url: 'stun:stun.voipbuster.com'},
+                {url: 'stun:stun.voipstunt.com'},
+                {url: 'stun:stun.voxgratia.org'},
+                {url: 'stun:stun.xten.com'},
+                {
+                    url: 'turn:numb.viagenie.ca',
+                    credential: 'muazkh',
+                    username: 'webrtc@live.com',
+                },
+                {
+                    url: 'turn:turn.bistri.com:80',
+                    credential: 'homeo',
+                    username: 'homeo',
+                },
+                {
+                    url: 'turn:turn.anyfirewall.com:443?transport=tcp',
+                    credential: 'webrtc',
+                    username: 'webrtc',
+                },
+            ]);
+        }
 
         if (stunServer) {
             iceServers.push({
@@ -233,42 +236,45 @@ function listenAccept(userId, peerId) {
 
             const {stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
 
-            const iceServers = [
-                {url: 'stun:stun.l.google.com:19302'},
-                {url: 'stun:stun1.l.google.com:19302'},
-                {url: 'stun:stun2.l.google.com:19302'},
-                {url: 'stun:stun3.l.google.com:19302'},
-                {url: 'stun:stun4.l.google.com:19302'},
-                {url: 'stun:stun01.sipphone.com'},
-                {url: 'stun:stun.ekiga.net'},
-                {url: 'stun:stun.fwdnet.net'},
-                {url: 'stun:stun.ideasip.com'},
-                {url: 'stun:stun.iptel.org'},
-                {url: 'stun:stun.rixtelecom.se'},
-                {url: 'stun:stun.schlund.de'},
-                {url: 'stun:stunserver.org'},
-                {url: 'stun:stun.softjoys.com'},
-                {url: 'stun:stun.voiparound.com'},
-                {url: 'stun:stun.voipbuster.com'},
-                {url: 'stun:stun.voipstunt.com'},
-                {url: 'stun:stun.voxgratia.org'},
-                {url: 'stun:stun.xten.com'},
-                {
-                    url: 'turn:numb.viagenie.ca',
-                    credential: 'muazkh',
-                    username: 'webrtc@live.com',
-                },
-                {
-                    url: 'turn:turn.bistri.com:80',
-                    credential: 'homeo',
-                    username: 'homeo',
-                },
-                {
-                    url: 'turn:turn.anyfirewall.com:443?transport=tcp',
-                    credential: 'webrtc',
-                    username: 'webrtc',
-                },
-            ];
+            const iceServers = [];
+            if (!stunServer && !turnServer) {
+                iceServers.concat([
+                    {url: 'stun:stun.l.google.com:19302'},
+                    {url: 'stun:stun1.l.google.com:19302'},
+                    {url: 'stun:stun2.l.google.com:19302'},
+                    {url: 'stun:stun3.l.google.com:19302'},
+                    {url: 'stun:stun4.l.google.com:19302'},
+                    {url: 'stun:stun01.sipphone.com'},
+                    {url: 'stun:stun.ekiga.net'},
+                    {url: 'stun:stun.fwdnet.net'},
+                    {url: 'stun:stun.ideasip.com'},
+                    {url: 'stun:stun.iptel.org'},
+                    {url: 'stun:stun.rixtelecom.se'},
+                    {url: 'stun:stun.schlund.de'},
+                    {url: 'stun:stunserver.org'},
+                    {url: 'stun:stun.softjoys.com'},
+                    {url: 'stun:stun.voiparound.com'},
+                    {url: 'stun:stun.voipbuster.com'},
+                    {url: 'stun:stun.voipstunt.com'},
+                    {url: 'stun:stun.voxgratia.org'},
+                    {url: 'stun:stun.xten.com'},
+                    {
+                        url: 'turn:numb.viagenie.ca',
+                        credential: 'muazkh',
+                        username: 'webrtc@live.com',
+                    },
+                    {
+                        url: 'turn:turn.bistri.com:80',
+                        credential: 'homeo',
+                        username: 'homeo',
+                    },
+                    {
+                        url: 'turn:turn.anyfirewall.com:443?transport=tcp',
+                        credential: 'webrtc',
+                        username: 'webrtc',
+                    },
+                ]);
+            }
 
             if (stunServer) {
                 iceServers.push({
@@ -395,43 +401,45 @@ export function acceptCall() {
         debug('acceptCall', peerAccepted);
         const {stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
 
-        const iceServers = [
-            {url: 'stun:stun.l.google.com:19302'},
-            {url: 'stun:stun1.l.google.com:19302'},
-            {url: 'stun:stun2.l.google.com:19302'},
-            {url: 'stun:stun3.l.google.com:19302'},
-            {url: 'stun:stun4.l.google.com:19302'},
-            {url: 'stun:stun01.sipphone.com'},
-            {url: 'stun:stun.ekiga.net'},
-            {url: 'stun:stun.fwdnet.net'},
-            {url: 'stun:stun.ideasip.com'},
-            {url: 'stun:stun.iptel.org'},
-            {url: 'stun:stun.rixtelecom.se'},
-            {url: 'stun:stun.schlund.de'},
-            {url: 'stun:stunserver.org'},
-            {url: 'stun:stun.softjoys.com'},
-            {url: 'stun:stun.voiparound.com'},
-            {url: 'stun:stun.voipbuster.com'},
-            {url: 'stun:stun.voipstunt.com'},
-            {url: 'stun:stun.voxgratia.org'},
-            {url: 'stun:stun.xten.com'},
-            {
-                url: 'turn:numb.viagenie.ca',
-                credential: 'muazkh',
-                username: 'webrtc@live.com',
-            },
-            {
-                url: 'turn:turn.bistri.com:80',
-                credential: 'homeo',
-                username: 'homeo',
-            },
-            {
-                url: 'turn:turn.anyfirewall.com:443?transport=tcp',
-                credential: 'webrtc',
-                username: 'webrtc',
-            },
-        ];
-
+        const iceServers = [];
+        if (!stunServer && !turnServer) {
+            iceServers.concat([
+                {url: 'stun:stun.l.google.com:19302'},
+                {url: 'stun:stun1.l.google.com:19302'},
+                {url: 'stun:stun2.l.google.com:19302'},
+                {url: 'stun:stun3.l.google.com:19302'},
+                {url: 'stun:stun4.l.google.com:19302'},
+                {url: 'stun:stun01.sipphone.com'},
+                {url: 'stun:stun.ekiga.net'},
+                {url: 'stun:stun.fwdnet.net'},
+                {url: 'stun:stun.ideasip.com'},
+                {url: 'stun:stun.iptel.org'},
+                {url: 'stun:stun.rixtelecom.se'},
+                {url: 'stun:stun.schlund.de'},
+                {url: 'stun:stunserver.org'},
+                {url: 'stun:stun.softjoys.com'},
+                {url: 'stun:stun.voiparound.com'},
+                {url: 'stun:stun.voipbuster.com'},
+                {url: 'stun:stun.voipstunt.com'},
+                {url: 'stun:stun.voxgratia.org'},
+                {url: 'stun:stun.xten.com'},
+                {
+                    url: 'turn:numb.viagenie.ca',
+                    credential: 'muazkh',
+                    username: 'webrtc@live.com',
+                },
+                {
+                    url: 'turn:turn.bistri.com:80',
+                    credential: 'homeo',
+                    username: 'homeo',
+                },
+                {
+                    url: 'turn:turn.anyfirewall.com:443?transport=tcp',
+                    credential: 'webrtc',
+                    username: 'webrtc',
+                },
+            ]);
+        }
         if (stunServer) {
             iceServers.push({
                 url: stunServer,
