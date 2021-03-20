@@ -55,6 +55,7 @@ class AudioCallPanel extends React.Component {
             turnServer,
             turnServerUsername,
             turnServerCredential,
+            configLoaded,
             config,
         } = props;
 
@@ -106,8 +107,9 @@ class AudioCallPanel extends React.Component {
             turnServer,
             turnServerUsername,
             turnServerCredential,
+            configLoaded,
             config,
-        } = this.state;
+        } = this.props;
         const roomCode = `mattermost-webrtc-video-${config.DiagnosticId}`;
         debug('Room', roomCode);
         const iceServers = [
@@ -159,6 +161,10 @@ class AudioCallPanel extends React.Component {
                 username: turnServerUsername,
                 credential: turnServerCredential,
             });
+        }
+
+        if (!configLoaded) {
+            return;
         }
 
         const hub = signalhub(roomCode, [signalhubURL || 'https://baatcheet.herokuapp.com']);
