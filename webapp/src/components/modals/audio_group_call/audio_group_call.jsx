@@ -49,7 +49,7 @@ class AudioCallPanel extends React.Component {
         const roomName = '2ecbcc63-0305-4edc-a351-1123913ba43f';
         const invalidRoom = false;
 
-        const {configLoaded,
+        const {
             signalhubURL,
             stunServer,
             turnServer,
