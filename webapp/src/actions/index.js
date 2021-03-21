@@ -63,7 +63,11 @@ export function makeVideoCall(peerId) {
     return (dispatch, getState) => {
         const user = getCurrentUser(getState());
         const config = getConfig(getState());
-        const {signalhubURL, callIncoming, callOutgoing} = getState()[`plugins-${pluginId}`];
+        const {configLoaded, signalhubURL, callIncoming, callOutgoing} = getState()[`plugins-${pluginId}`];
+
+        if (!configLoaded) {
+            return;
+        }
 
         if (!peerId) {
             return;
@@ -186,7 +190,11 @@ export function receiveVideoCall(peerId) {
 export function listenVideoCall() {
     return (dispatch, getState) => {
         const config = getConfig(getState());
-        const {signalhubURL, callListening} = getState()[`plugins-${pluginId}`];
+        const {configLoaded, signalhubURL, callListening} = getState()[`plugins-${pluginId}`];
+
+        if (!configLoaded) {
+            return;
+        }
 
         if (callListening) {
             return;
@@ -216,8 +224,12 @@ function listenAccept(userId, peerId) {
     return (dispatch, getState) => {
         const config = getConfig(getState());
         const user = getUser(getState(), userId);
-        const {signalhubURL, callPeerId} = getState()[`plugins-${pluginId}`];
+        const {configLoaded, signalhubURL, callPeerId} = getState()[`plugins-${pluginId}`];
         const {stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
+
+        if (!configLoaded) {
+            return;
+        }
 
         const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, signalhubURL || DEFAULT_SIGNAL_HUB_URL);
         accepthub.subscribe('all').on('data', ({...a}) => {
