@@ -35,7 +35,7 @@
     "file-loader": "^4.0.0",
     "jest": "^24.8.0",
     "webpack": "4.35.0",
-    "webpack-cli": "3.3.5"
+    "webpack-cli": "3.3.12"
   },
   "dependencies": {
     "@types/enzyme": "3.10.3",
