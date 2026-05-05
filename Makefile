@@ -2,7 +2,9 @@ GO ?= $(shell command -v go 2> /dev/null)
 NPM ?= $(shell command -v npm 2> /dev/null)
 CURL ?= $(shell command -v curl 2> /dev/null)
 MANIFEST_FILE ?= plugin.json
-GOPATH ?= $(shell go env GOPATH)
+GOPATH ?= $(shell $(GO) env GOPATH)
+# Where go install puts binaries when GOBIN is unset (defaults to GOPATH/bin).
+GO_INSTALL_BIN ?= $(if $(shell $(GO) env GOBIN),$(shell $(GO) env GOBIN),$(GOPATH)/bin)
 GO_TEST_FLAGS ?= -race
 GO_BUILD_FLAGS ?=
 MM_UTILITIES_DIR ?= ../mattermost-utilities
@@ -44,9 +46,9 @@ endif
 gofmt:
 ifneq ($(HAS_SERVER),)
 	@echo Running gofmt
-	@for package in $$(go list ./...); do \
+	@for package in $$( $(GO) list ./... 2>/dev/null | grep -v /node_modules/ ); do \
 		echo "Checking "$$package; \
-		files=$$(go list -f '{{range .GoFiles}}{{$$.Dir}}/{{.}} {{end}}' $$package); \
+		files=$$($(GO) list -f '{{range .GoFiles}}{{$$.Dir}}/{{.}} {{end}}' $$package); \
 		if [ "$$files" ]; then \
 			gofmt_output=$$(gofmt -d -s $$files 2>&1); \
 			if [ "$$gofmt_output" ]; then \
@@ -64,10 +66,9 @@ endif
 govet:
 ifneq ($(HAS_SERVER),)
 	@echo Running govet
-	@# Workaround because you can't install binaries without adding them to go.mod
-	env GO111MODULE=off $(GO) get golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
-	$(GO) vet ./...
-	$(GO) vet -vettool=$(GOPATH)/bin/shadow ./...
+	@$(GO) install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow@latest
+	$(GO) vet $$( $(GO) list ./... 2>/dev/null | grep -v /node_modules/ )
+	$(GO) vet -vettool=$(GO_INSTALL_BIN)/shadow $$( $(GO) list ./... 2>/dev/null | grep -v /node_modules/ )
 	@echo Govet success
 endif
 
@@ -75,8 +76,8 @@ endif
 .PHONY: golint
 golint:
 	@echo Running lint
-	env GO111MODULE=off $(GO) get golang.org/x/lint/golint
-	$(GOPATH)/bin/golint -set_exit_status ./...
+	@$(GO) install golang.org/x/lint/golint@latest
+	$(GO_INSTALL_BIN)/golint -set_exit_status $$( $(GO) list ./... 2>/dev/null | grep -v /node_modules/ )
 	@echo lint success
 
 ## Builds the server, if it exists, including support for multiple architectures.
@@ -85,7 +86,9 @@ server:
 ifneq ($(HAS_SERVER),)
 	mkdir -p server/dist;
 	cd server && env GOOS=linux GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) -o dist/plugin-linux-amd64;
+	cd server && env GOOS=linux GOARCH=arm64 $(GO) build $(GO_BUILD_FLAGS) -o dist/plugin-linux-arm64;
 	cd server && env GOOS=darwin GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) -o dist/plugin-darwin-amd64;
+	cd server && env GOOS=darwin GOARCH=arm64 $(GO) build $(GO_BUILD_FLAGS) -o dist/plugin-darwin-arm64;
 	cd server && env GOOS=windows GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) -o dist/plugin-windows-amd64.exe;
 endif
 

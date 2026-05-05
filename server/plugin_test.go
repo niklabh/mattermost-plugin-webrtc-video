@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +12,6 @@ import (
 func TestHandleConfigAuth(t *testing.T) {
 	assert := assert.New(t)
 	plugin := Plugin{configuration: &configuration{
-		SignalhubURL:         "http://sighub.example.com",
 		STUNServer:           "stun:stun.example.com:3498",
 		TURNServer:           "turn:turn.example.com:3498",
 		TURNServerUsername:   "username",
@@ -28,17 +27,16 @@ func TestHandleConfigAuth(t *testing.T) {
 
 	result := w.Result()
 	assert.NotNil(result)
-	bodyBytes, err := ioutil.ReadAll(result.Body)
+	bodyBytes, err := io.ReadAll(result.Body)
 	assert.Nil(err)
 	bodyString := string(bodyBytes)
 
-	assert.Equal("{\"SignalhubURL\":\"http://sighub.example.com\",\"STUNServer\":\"stun:stun.example.com:3498\",\"TURNServer\":\"turn:turn.example.com:3498\",\"TURNServerUsername\":\"username\",\"TURNServerCredential\":\"credential\"}\n", bodyString)
+	assert.Equal("{\"STUNServer\":\"stun:stun.example.com:3498\",\"TURNServer\":\"turn:turn.example.com:3498\",\"TURNServerUsername\":\"username\",\"TURNServerCredential\":\"credential\"}\n", bodyString)
 }
 
 func TestHandleConfigAnonymous(t *testing.T) {
 	assert := assert.New(t)
 	plugin := Plugin{configuration: &configuration{
-		SignalhubURL:         "http://sighub.example.com",
 		STUNServer:           "stun:stun.example.com:3498",
 		TURNServer:           "turn:turn.example.com:3498",
 		TURNServerUsername:   "username",
@@ -51,10 +49,28 @@ func TestHandleConfigAnonymous(t *testing.T) {
 
 	result := w.Result()
 	assert.NotNil(result)
-	bodyBytes, err := ioutil.ReadAll(result.Body)
+	bodyBytes, err := io.ReadAll(result.Body)
 	assert.Nil(err)
 	bodyString := string(bodyBytes)
 
 	assert.Equal(http.StatusForbidden, result.StatusCode)
 	assert.Equal("not authenticated\n", bodyString)
+}
+
+func TestHandleConfigEmptyOK(t *testing.T) {
+	assert := assert.New(t)
+	plugin := Plugin{configuration: &configuration{}}
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/v1/config", nil)
+	r.Header = http.Header{
+		"Mattermost-User-Id": []string{"123456"},
+	}
+
+	plugin.ServeHTTP(nil, w, r)
+
+	result := w.Result()
+	assert.Equal(http.StatusOK, result.StatusCode)
+	bodyBytes, err := io.ReadAll(result.Body)
+	assert.Nil(err)
+	assert.Contains(string(bodyBytes), `"STUNServer":""`)
 }

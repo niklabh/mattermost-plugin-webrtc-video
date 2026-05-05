@@ -3,10 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/pkg/errors"
 )
 
@@ -103,7 +102,7 @@ func dumpPluginVersion(manifest *model.Manifest) {
 // applyManifest propagates the plugin_id into the server and webapp folders, as necessary
 func applyManifest(manifest *model.Manifest) error {
 	if manifest.HasServer() {
-		if err := ioutil.WriteFile(
+		if err := os.WriteFile(
 			"server/manifest.go",
 			[]byte(fmt.Sprintf(pluginIDGoFileTemplate, manifest.Id, manifest.Version)),
 			0644,
@@ -113,7 +112,7 @@ func applyManifest(manifest *model.Manifest) error {
 	}
 
 	if manifest.HasWebapp() {
-		if err := ioutil.WriteFile(
+		if err := os.WriteFile(
 			"webapp/src/manifest.js",
 			[]byte(fmt.Sprintf(pluginIDJSFileTemplate, manifest.Id, manifest.Version)),
 			0644,

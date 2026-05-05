@@ -5,9 +5,10 @@ import React from 'react';
 import {getCurrentUser, getProfiles} from 'mattermost-redux/selectors/entities/users';
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import PropTypes from 'prop-types';
-import signalhub from 'signalhub';
 import swarm from 'webrtc-swarm';
 
+import pluginSignalHub from '../../../utils/pluginSignalHub';
+import {buildIceServers} from '../../../utils/iceServers';
 import debug from '../../../utils/debug';
 import {id as pluginId} from 'manifest';
 
@@ -39,9 +40,14 @@ async function getMyStream() {
 
 class AudioCallPanel extends React.Component {
     static propTypes = {
-        // eslint-disable-next-line react/no-unused-prop-types
-        getCurrentUser: PropTypes.func.isRequired,
         userId: PropTypes.string.isRequired,
+        username: PropTypes.string,
+        configLoaded: PropTypes.bool,
+        stunServer: PropTypes.string,
+        turnServer: PropTypes.string,
+        turnServerUsername: PropTypes.string,
+        turnServerCredential: PropTypes.string,
+        config: PropTypes.object,
     };
     constructor(props) {
         super(props);
@@ -50,7 +56,6 @@ class AudioCallPanel extends React.Component {
         const invalidRoom = false;
 
         const {
-            signalhubURL,
             stunServer,
             turnServer,
             turnServerUsername,
@@ -75,7 +80,6 @@ class AudioCallPanel extends React.Component {
             speakerOn: false,
             myUsername: props.username,
             configLoaded,
-            signalhubURL,
             stunServer,
             turnServer,
             turnServerUsername,
@@ -102,7 +106,6 @@ class AudioCallPanel extends React.Component {
         const {
             myUuid,
             myUsername,
-            signalhubURL,
             stunServer,
             turnServer,
             turnServerUsername,
@@ -112,65 +115,13 @@ class AudioCallPanel extends React.Component {
         } = this.props;
         const roomCode = `mattermost-webrtc-video-${config.DiagnosticId}`;
         debug('Room', roomCode);
-        const iceServers = [];
-        if (!stunServer && !turnServer) {
-            iceServers.concat([
-                {url: 'stun:stun.l.google.com:19302'},
-                {url: 'stun:stun1.l.google.com:19302'},
-                {url: 'stun:stun2.l.google.com:19302'},
-                {url: 'stun:stun3.l.google.com:19302'},
-                {url: 'stun:stun4.l.google.com:19302'},
-                {url: 'stun:stun01.sipphone.com'},
-                {url: 'stun:stun.ekiga.net'},
-                {url: 'stun:stun.fwdnet.net'},
-                {url: 'stun:stun.ideasip.com'},
-                {url: 'stun:stun.iptel.org'},
-                {url: 'stun:stun.rixtelecom.se'},
-                {url: 'stun:stun.schlund.de'},
-                {url: 'stun:stunserver.org'},
-                {url: 'stun:stun.softjoys.com'},
-                {url: 'stun:stun.voiparound.com'},
-                {url: 'stun:stun.voipbuster.com'},
-                {url: 'stun:stun.voipstunt.com'},
-                {url: 'stun:stun.voxgratia.org'},
-                {url: 'stun:stun.xten.com'},
-                {
-                    url: 'turn:numb.viagenie.ca',
-                    credential: 'muazkh',
-                    username: 'webrtc@live.com',
-                },
-                {
-                    url: 'turn:turn.bistri.com:80',
-                    credential: 'homeo',
-                    username: 'homeo',
-                },
-                {
-                    url: 'turn:turn.anyfirewall.com:443?transport=tcp',
-                    credential: 'webrtc',
-                    username: 'webrtc',
-                },
-            ]);
-        }
-
-        if (stunServer) {
-            iceServers.push({
-                url: stunServer,
-            });
-        }
-
-        if (turnServer && turnServerUsername && turnServerCredential) {
-            iceServers.push({
-                url: turnServer,
-                username: turnServerUsername,
-                credential: turnServerCredential,
-            });
-        }
+        const iceServers = buildIceServers(stunServer, turnServer, turnServerUsername, turnServerCredential);
 
         if (!configLoaded) {
             return;
         }
 
-        const hub = signalhub(roomCode, [signalhubURL || 'https://baatcheet.herokuapp.com']);
+        const hub = pluginSignalHub(roomCode);
 
         hub.subscribe('all').on('data', this.handleHubData.bind(this));
 
@@ -185,7 +136,7 @@ class AudioCallPanel extends React.Component {
 
                     return outgoingSignalingData;
                 },
-            }
+            },
         );
 
         sw.on('peer', this.handleConnect.bind(this));
@@ -203,7 +154,7 @@ class AudioCallPanel extends React.Component {
                 from: myUuid,
                 fromUserId: userId,
 
-            }
+            },
         );
     }
 
@@ -396,18 +347,18 @@ class AudioCallPanel extends React.Component {
                                 className={'icon fa fa-circle'}
                                 style={style.online}
                             />{'You'}</li>)}
-                    {Object.keys(peerStreams).map((id) => {
-                        return (
-                            <li
-                                style={style.listItem}
-
-                                key={id}
-                            >
-                                <i
-                                    className={'icon fa fa-circle'}
-                                    style={style.online}
-                                />{peerStreams[id].username}</li>);
-                    })}
+                    {Object.keys(peerStreams).map((id) => (
+                        <li
+                            key={id}
+                            style={style.listItem}
+                        >
+                            <i
+                                className={'icon fa fa-circle'}
+                                style={style.online}
+                            />
+                            {peerStreams[id].username}
+                        </li>
+                    ))}
                 </ul>
             </div>
         );
@@ -417,7 +368,7 @@ class AudioCallPanel extends React.Component {
 const mapStateToProps = (state) => {
     const currentUser = getCurrentUser(state);
     const profiles = getProfiles(state);
-    const {configLoaded, signalhubURL, stunServer, turnServer, turnServerUsername, turnServerCredential} = state[`plugins-${pluginId}`];
+    const {configLoaded, stunServer, turnServer, turnServerUsername, turnServerCredential} = state[`plugins-${pluginId}`];
     const config = getConfig(state);
 
     return {
@@ -426,7 +377,6 @@ const mapStateToProps = (state) => {
         currentUser,
         profiles,
         configLoaded,
-        signalhubURL,
         stunServer,
         turnServer,
         turnServerUsername,

@@ -1,117 +1,62 @@
 # Mattermost WebRTC video/audio call plugin
 
-[![CircleCI](https://circleci.com/gh/niklabh/mattermost-plugin-webrtc-video.svg?style=svg)](https://circleci.com/gh/niklabh/mattermost-plugin-webrtc-video)
+This plugin adds peer-to-peer **video calls** (direct messages) and a **voice channel** sidebar panel. It uses browser WebRTC. **Signalling runs inside the plugin** (HTTP + Server-Sent Events on the Mattermost server); you still configure **STUN** and usually **TURN** for ICE.
+Note: the broker is **in-memory in the plugin process**; it does not span multiple app nodes (no HA) unless you add shared storage or an external signal layer later.
 
-This plugin add video call and group audio channel feature to Mattermost. The plugin uses WebRTC
-protocol built into the browser, but you need to provide and configure your
-own Signalhub, STUN and TURN servers.
+Current release targets **Mattermost 10+** (see `min_server_version` in `plugin.json`). The Go server uses [`github.com/mattermost/mattermost/server/public`](https://pkg.go.dev/github.com/mattermost/mattermost/server/public/plugin) per current plugin development practice.
 
-
-![Webtrc plugin screenshot](https://github.com/niklabh/mattermost-plugin-webrtc-video/raw/master/assets/screen.jpg)
+![WebRTC plugin screenshot](https://github.com/niklabh/mattermost-plugin-webrtc-video/raw/master/assets/screen.jpg)
 
 ## Features
 
-Add ability to do webrtc video call to another user and join a group audio channel. To start the call go to direct message. On top right click video icon. Allow permission to access microphone and camera. Other user will receive a incoming call.
+- Start a video call from a **direct message** channel via the header button; the callee gets an incoming-call UI. The header action applies to **1:1 DMs only** (not group messages or regular channels).
+- Optional **voice channel** controls in the left sidebar (microphone / speaker).
+- Call controls: mute mic, toggle camera, end call; remote video with a small **picture-in-picture** preview of your own camera.
 
-## Usage
+## Installation
 
-Configure stun/turn and signalhub servers setting as mentioned below. To start video call go to direct message and click on the video call button on channel header button on top right:
-
-![Header button screenshot](https://github.com/niklabh/mattermost-plugin-webrtc-video/raw/master/assets/header-button.png)
-
-Other user will see a incoming call:
-
-![Header button screenshot](https://github.com/niklabh/mattermost-plugin-webrtc-video/raw/master/assets/calling.png)
-
-To join audio channel click on unmute icon on top left. To start listening click on speaker icon.
-
-![Header button screenshot](https://github.com/niklabh/mattermost-plugin-webrtc-video/raw/master/assets/voice-channel.png)
-
-# Installation
-
-1. Go to https://github.com/niklabh/mattermost-plugin-webrtc-video/releases to download the latest release file in `.zip` or `.tar.gz` format.
-2. Upload the file through **System Console > Plugins > Management**, or manually upload it to the Mattermost server under plugin directory. See [documentation](https://docs.mattermost.com/administration/plugins.html#set-up-guide) for more details.
+1. Build the plugin bundle (see **Build** below) or download a release `.tar.gz` if available.
+2. Upload via **System Console → Plugins → Plugin Management** (or your deployment’s equivalent). See [Mattermost plugin documentation](https://developers.mattermost.com/integrate/plugins/) and [product docs](https://docs.mattermost.com/).
 
 ## Configuration
 
-Please add turn stun and signal hub servers in settings. Go to **System Console > Plugins > GitHub** and add turn/stun and signalhub servers:
+In **System Console → Plugins → WebRTC Video**, set:
 
-publicly available stun servers:
-```
+| Setting | Notes |
+|--------|--------|
+| **STUN server** | Optional if unset the client uses a small set of public Google STUN URLs only (no baked-in TURN credentials). Format: `stun:host:port` |
+| **TURN server** | Recommended for NAT-heavy networks. Format: `turn:host:port` with username and credential if your TURN server needs them. |
+
+Example STUN (Google public):
+
+```text
 stun:stun.l.google.com:19302
-stun:stun1.l.google.com:19302
-stun:stun2.l.google.com:19302
-stun:stun3.l.google.com:19302
-stun:stun4.l.google.com:19302
-stun:stun01.sipphone.com
-stun:stun.ekiga.net
-stun:stun.fwdnet.net
-stun:stun.ideasip.com
-stun:stun.iptel.org
-stun:stun.rixtelecom.se
-stun:stun.schlund.de
-stun:stunserver.org
-stun:stun.softjoys.com
-stun:stun.voiparound.com
-stun:stun.voipbuster.com
-stun:stun.voipstunt.com
-stun:stun.voxgratia.org
-stun:stun.xten.com
-```
-publicly available turn servers:
-```
-turn:numb.viagenie.ca
-turn:192.158.29.39:3478?transport=udp
-turn:192.158.29.39:3478?transport=tcp
-
-url: 'turn:numb.viagenie.ca'	
-credential: 'muazkh'	
-username: 'webrtc@live.com'	
-
-url: 'turn:192.158.29.39:3478?transport=udp'	
-credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA='	
-username: '28224511:1379330808'	
-
-url: 'turn:192.158.29.39:3478?transport=tcp'	
-credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA='	
-username: '28224511:1379330808'
-```
-publicly available signalhub server
-```
-https://baatcheet.herokuapp.com
 ```
 
+You must run or subscribe to a **TURN** service for reliable connectivity; configure it in the plugin settings rather than relying on third-party credentials in documentation.
 
 ## Build
 
-Build your plugin:
-```
+Requires **Go** (1.22+) and **Node.js** / npm.
+
+```bash
 make
 ```
 
-This will produce a single plugin file (with support for multiple
-architectures) for upload to your Mattermost server:
+Produces `dist/mattermost-webrtc-video-<version>.tar.gz`.
 
-```
-dist/mattermost-webrtc-video-<version>.tar.gz
+After changing `plugin.json` version, run `make apply` so `server/manifest.go` and `webapp/src/manifest.js` stay in sync (or update those files to match).
 
-```
+## Development notes
 
+- Webpack bundles the webapp; React / Redux / PropTypes / React Bootstrap are **externals** supplied by the Mattermost webapp at runtime.
+- **`mattermost-redux`** is aligned to a 5.x line compatible with classic selector paths and webpack 4; the host server should be a matching major family (10+).
+- **`make`** builds server plugins for **linux/amd64**, **linux/arm64**, **darwin/amd64**, **darwin/arm64** (Apple Silicon), and **windows/amd64**. If Mattermost reports `backend executable not found for environment: darwin/arm64`, rebuild from a branch that includes `darwin-arm64` in `plugin.json` and upload the new bundle.
 
-## Contributions
+## Contributing
 
-Contributions are welcome
+Contributions are welcome via issues and pull requests on the repository.
 
+## History
 
-## Todo:
-
-- Bug fixes
-- Signal using mattermost redux
-- turn off video
-- mute audio
-- end call from source works
-
-
-## Latest Release
-
-https://github.com/niklabh/mattermost-plugin-webrtc-video/releases/
+- **1.1.0** — Server SDK on `mattermost/server/public`, signalling via plugin HTTP/SSE (no external Signalhub), ICE and UI updates, dependency refresh.

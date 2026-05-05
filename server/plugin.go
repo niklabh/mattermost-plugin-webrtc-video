@@ -2,12 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"sync"
 
-	"github.com/mattermost/mattermost-server/v5/plugin"
+	"github.com/mattermost/mattermost/server/public/plugin"
 )
 
 // Plugin implements the interface expected by the Mattermost server to
@@ -21,20 +20,27 @@ type Plugin struct {
 	// configuration is the active plugin configuration. Consult getConfiguration and
 	// setConfiguration for usage.
 	configuration *configuration
+
+	signalOnce sync.Once
+	signal     *signalBroker
+}
+
+func (p *Plugin) getSignal() *signalBroker {
+	p.signalOnce.Do(func() {
+		p.signal = newSignalBroker()
+	})
+	return p.signal
 }
 
 // ServeHTTP handles HTTP requests.
 func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request) {
-	config := p.getConfiguration()
-
-	if err := config.IsValid(); err != nil {
-		http.Error(w, fmt.Sprintf("Plugin is not configured: %v", err.Error()), http.StatusNotImplemented)
-		return
-	}
-
-	switch path := r.URL.Path; path {
+	switch r.URL.Path {
 	case "/v1/config":
 		p.handleConfig(w, r)
+	case "/v1/signal/publish":
+		p.handleSignalPublish(w, r)
+	case "/v1/signal/stream":
+		p.handleSignalStream(w, r)
 	default:
 		http.NotFound(w, r)
 	}
@@ -55,21 +61,18 @@ func (p *Plugin) handleConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	config := p.getConfiguration()
-	signalhubURL := strings.TrimSpace(config.SignalhubURL)
 	stunServer := strings.TrimSpace(config.STUNServer)
 	turnServer := strings.TrimSpace(config.TURNServer)
 	turnServerUsername := strings.TrimSpace(config.TURNServerUsername)
 	turnServerCredential := strings.TrimSpace(config.TURNServerCredential)
 
 	type ConfigJSON struct {
-		SignalhubURL         string
 		STUNServer           string
 		TURNServer           string
 		TURNServerUsername   string
 		TURNServerCredential string
 	}
 	configJSON := ConfigJSON{
-		SignalhubURL:         signalhubURL,
 		STUNServer:           stunServer,
 		TURNServer:           turnServer,
 		TURNServerUsername:   turnServerUsername,
