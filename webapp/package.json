@@ -41,7 +41,7 @@
     "@types/node": "^22.10.0",
     "@types/react": "^16.14.62",
     "@types/react-dom": "^16.9.24",
-    "axios": "0.28.1",
+    "axios": "0.31.1",
     "mattermost-redux": "5.33.1",
     "prop-types": "^15.8.1",
     "react": "16.14.0",
