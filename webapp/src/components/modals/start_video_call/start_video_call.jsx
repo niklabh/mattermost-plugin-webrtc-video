@@ -25,6 +25,7 @@ export default class StartVideoCallModal extends PureComponent {
         peerStream: PropTypes.object,
         selfStream: PropTypes.object,
         peerAccepted: PropTypes.bool.isRequired,
+        outgoingCallDeclined: PropTypes.bool.isRequired,
     };
 
     componentDidMount() {
@@ -80,7 +81,7 @@ export default class StartVideoCallModal extends PureComponent {
     render() {
         const {
             visible, incoming, outgoing, peerName, accepted, callPeerAudioOn, callPeerVideoOn,
-            peerStream, peerAccepted, audioOn, videoOn, selfStream,
+            peerStream, peerAccepted, outgoingCallDeclined, audioOn, videoOn, selfStream,
         } = this.props;
         const s = styles;
 
@@ -136,7 +137,31 @@ export default class StartVideoCallModal extends PureComponent {
                         </div>
                     )}
 
-                    {accepted && !peerStream && (
+                    {accepted && !peerStream && outgoing && outgoingCallDeclined && (
+                        <div style={s.connectingWrap}>
+                            <div
+                                style={s.declinedMark}
+                                aria-hidden='true'
+                            >
+                                <i
+                                    className='fa fa-phone'
+                                    style={s.fabIconFlip}
+                                />
+                            </div>
+                            <h2 style={s.titleMuted}>{'Call declined'}</h2>
+                            <p style={s.subtitleMuted}>
+                                {peerName}{" isn't available right now."}
+                            </p>
+                            <button
+                                type='button'
+                                style={{...s.textButton, marginTop: 16}}
+                                onClick={this.endCall}
+                            >
+                                {'Close'}
+                            </button>
+                        </div>
+                    )}
+                    {accepted && !peerStream && !(outgoing && outgoingCallDeclined) && (
                         <div style={s.connectingWrap}>
                             <div style={s.spinner}/>
                             <h2 style={s.titleMuted}>
@@ -328,6 +353,19 @@ const styles = {
         padding: '56px 24px 40px',
         textAlign: 'center',
     },
+    declinedMark: {
+        width: '56px',
+        height: '56px',
+        margin: '0 auto 12px',
+        borderRadius: '50%',
+        background: 'rgba(255, 92, 92, 0.2)',
+        border: '2px solid rgba(255, 92, 92, 0.55)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '22px',
+        color: '#ff8a8a',
+    },
     spinner: {
         width: '48px',
         height: '48px',
@@ -426,7 +464,6 @@ const styles = {
     },
     toolBtnEnd: {
         background: 'linear-gradient(135deg, #ff5c5c, #d01212)',
-        paddingLeft: '14px',
     },
 };
 

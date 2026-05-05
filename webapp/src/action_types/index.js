@@ -21,4 +21,5 @@ export default {
     VIDEO_TOGGLE: pluginId + '_video_toggle',
     OPEN_VIDEO_CALL_PICKER: pluginId + '_open_video_call_picker',
     CLOSE_VIDEO_CALL_PICKER: pluginId + '_close_video_call_picker',
+    OUTGOING_CALL_DECLINED: pluginId + '_outgoing_call_declined',
 };

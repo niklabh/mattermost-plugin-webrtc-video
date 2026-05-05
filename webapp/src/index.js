@@ -5,6 +5,8 @@ import VideoCallPickerModal from './components/video_call_picker';
 import PopoverVideoCallButton from './components/popover_video_call_button';
 import LeftSidebarHeader from './components/left_sidebar_header';
 import Reducer from './reducers';
+import WebrtcInvitePost from './components/post_types/webrtc_invite_post';
+import {WEBRTC_INVITE_POST_TYPE} from './constants/callInvite';
 import {loadConfig, openVideoCallPicker} from './actions';
 
 export default class Plugin {
@@ -32,6 +34,7 @@ export default class Plugin {
         registry.registerRootComponent(StartVideoCallModal);
         registry.registerRootComponent(VideoCallPickerModal);
         registry.registerLeftSidebarHeaderComponent(LeftSidebarHeader);
+        registry.registerPostTypeComponent(WEBRTC_INVITE_POST_TYPE, WebrtcInvitePost);
         loadConfig()(store.dispatch, store.getState);
     }
 }

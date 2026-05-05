@@ -34,6 +34,7 @@ const mapStateToProps = (state) => {
         incoming: state[`plugins-${pluginId}`].callIncoming,
         accepted: state[`plugins-${pluginId}`].callAccepted,
         peerAccepted: state[`plugins-${pluginId}`].peerAccepted,
+        outgoingCallDeclined: state[`plugins-${pluginId}`].outgoingCallDeclined,
         peerStream: state[`plugins-${pluginId}`].callPeerStream,
         callPeerAudioOn: state[`plugins-${pluginId}`].callPeerAudioOn,
         callPeerVideoOn: state[`plugins-${pluginId}`].callPeerVideoOn,

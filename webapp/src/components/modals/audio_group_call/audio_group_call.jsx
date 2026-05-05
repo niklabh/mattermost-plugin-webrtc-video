@@ -12,6 +12,13 @@ import {buildIceServers} from '../../../utils/iceServers';
 import debug from '../../../utils/debug';
 import {id as pluginId} from 'manifest';
 
+const DIRECTORY_CHANNEL = 'voice-room-announce';
+const voiceRoomsStorageKey = (diag) => `mattermost-webrtc-voice-rooms-${diag}`;
+
+function genRoomId() {
+    return `vr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 async function getMediaStream(opts) {
     return navigator.mediaDevices.getUserMedia(opts);
 }
@@ -27,13 +34,10 @@ async function getMyStream() {
 
     try {
         debug('try just audio');
-
-        // If that fails, try just audio
         const stream = await getMediaStream({audio});
         return {myStream: stream, audioEnabled: true, videoEnabled: false};
     } catch (err) {
         debug(err);
-
         return {myStream: null, audioEnabled: false, videoEnabled: false};
     }
 }
@@ -49,11 +53,9 @@ class AudioCallPanel extends React.Component {
         turnServerCredential: PropTypes.string,
         config: PropTypes.object,
     };
+
     constructor(props) {
         super(props);
-
-        const roomName = '2ecbcc63-0305-4edc-a351-1123913ba43f';
-        const invalidRoom = false;
 
         const {
             stunServer,
@@ -66,46 +68,293 @@ class AudioCallPanel extends React.Component {
 
         this.state = {
             initialized: false,
-            roomName,
-            invalidRoom,
             peerStreams: {},
             playBacks: {},
             swarmInitialized: false,
-            myUuid: props.userId,
             audioOn: false,
             videoOn: false,
             audioEnabled: true,
             videoEnabled: false,
-            userId: props.userId,
             speakerOn: false,
-            myUsername: props.username,
-            configLoaded,
             stunServer,
             turnServer,
             turnServerUsername,
             turnServerCredential,
+            configLoaded,
             config,
+            activeRoom: null,
+            channelList: [],
+            newChannelNameDraft: '',
+            showCreateInput: false,
         };
+
+        this.swarmInstance = null;
+        this.directoryHub = null;
+        this.currentMyStream = null;
+        this.connectPending = false;
+        this.isUnmounted = false;
     }
+
+    componentDidMount() {
+        const {configLoaded, config} = this.props;
+        if (configLoaded && config && config.DiagnosticId) {
+            this.bootstrapDirectory();
+        }
+    }
+
+    componentWillUnmount() {
+        this.isUnmounted = true;
+        this.cleanupConnection(() => {
+            /* sync teardown */
+        });
+        if (this.directoryHub) {
+            try {
+                this.directoryHub.close();
+            } catch (e) {
+                /* ignore */
+            }
+            this.directoryHub = null;
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        const {configLoaded, config} = this.props;
+        if ((!prevProps.configLoaded && configLoaded) || (prevProps.config?.DiagnosticId !== config?.DiagnosticId)) {
+            if (config && config.DiagnosticId) {
+                this.bootstrapDirectory();
+            }
+        }
+    }
+
+    loadSavedRooms(diag) {
+        if (!diag) {
+            return [];
+        }
+        try {
+            const raw = localStorage.getItem(voiceRoomsStorageKey(diag));
+            return raw ? JSON.parse(raw) : [];
+        } catch (err) {
+            return [];
+        }
+    }
+
+    saveRooms(diag, list) {
+        if (!diag) {
+            return;
+        }
+        try {
+            localStorage.setItem(voiceRoomsStorageKey(diag), JSON.stringify(list.slice(0, 80)));
+        } catch (e) {
+            /* ignore */
+        }
+    }
+
+    mergeRoom(entry) {
+        const {roomId, name} = entry;
+        if (!roomId || !name) {
+            return;
+        }
+        this.setState((prev) => {
+            const next = [...prev.channelList];
+            const i = next.findIndex((r) => r.roomId === roomId);
+            const row = {roomId, name, ts: entry.ts || Date.now()};
+            if (i >= 0) {
+                next[i] = {...next[i], ...row};
+            } else {
+                next.push(row);
+            }
+            next.sort((a, b) => a.name.localeCompare(b.name));
+            const {config} = this.props;
+            if (config && config.DiagnosticId) {
+                this.saveRooms(config.DiagnosticId, next);
+            }
+            return {channelList: next};
+        });
+    }
+
+    bootstrapDirectory() {
+        const {config, configLoaded} = this.props;
+        if (!configLoaded || !config || !config.DiagnosticId) {
+            return;
+        }
+        const diag = config.DiagnosticId;
+        if (this.directoryHub) {
+            return;
+        }
+        const saved = this.loadSavedRooms(diag);
+        this.setState((prev) => {
+            const merged = [...saved];
+            for (const r of prev.channelList) {
+                if (!merged.find((m) => m.roomId === r.roomId)) {
+                    merged.push(r);
+                }
+            }
+            merged.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            return {channelList: merged};
+        });
+
+        const hubName = `mattermost-webrtc-video-${diag}-voice-directory`;
+        const hub = pluginSignalHub(hubName);
+        this.directoryHub = hub;
+        const stream = hub.subscribe(DIRECTORY_CHANNEL);
+        stream.on('data', (msg) => {
+            if (msg && msg.type === 'voice-room' && msg.roomId && msg.name) {
+                this.mergeRoom({
+                    roomId: msg.roomId,
+                    name: msg.name,
+                    ts: msg.ts,
+                });
+            }
+        });
+    }
+
+    announceRoom(roomId, name) {
+        const {config, configLoaded, userId} = this.props;
+        if (!configLoaded || !config || !config.DiagnosticId) {
+            return;
+        }
+        const hubName = `mattermost-webrtc-video-${config.DiagnosticId}-voice-directory`;
+        const hub = pluginSignalHub(hubName);
+        hub.broadcast(DIRECTORY_CHANNEL, {
+            type: 'voice-room',
+            roomId,
+            name,
+            userId,
+            ts: Date.now(),
+        });
+        hub.close();
+    }
+
+    cleanupConnection(done) {
+        const finish = typeof done === 'function' ? done : function noopCallback() {
+            /* optional async completion */
+        };
+
+        Object.values(this.state.playBacks || {}).forEach((aud) => {
+            try {
+                aud.pause();
+                aud.srcObject = null;
+            } catch (e) {
+                /* ignore */
+            }
+        });
+
+        if (this.currentMyStream) {
+            try {
+                this.currentMyStream.getTracks().forEach((t) => t.stop());
+            } catch (e) {
+                /* ignore */
+            }
+            this.currentMyStream = null;
+        }
+
+        if (this.swarmInstance) {
+            const sw = this.swarmInstance;
+            this.swarmInstance = null;
+            sw.close(() => {
+                finish();
+            });
+            return;
+        }
+
+        finish();
+    }
+
+    leaveRoomInternal(cb) {
+        this.cleanupConnection(() => {
+            this.connectPending = false;
+            if (this.isUnmounted) {
+                if (typeof cb === 'function') {
+                    cb();
+                }
+                return;
+            }
+            this.setState({
+                activeRoom: null,
+                initialized: false,
+                swarmInitialized: false,
+                peerStreams: {},
+                playBacks: {},
+                audioOn: false,
+                speakerOn: false,
+            }, cb);
+        });
+    }
+
+    handleLeaveRoom = (e) => {
+        if (e && e.preventDefault) {
+            e.preventDefault();
+        }
+        this.leaveRoomInternal(() => {
+            /* modal closed */
+        });
+    };
+
+    handleJoinRoom = (roomId, name) => (e) => {
+        if (e && e.preventDefault) {
+            e.preventDefault();
+        }
+        const {activeRoom} = this.state;
+        if (activeRoom && activeRoom.roomId === roomId) {
+            return;
+        }
+        this.cleanupConnection(() => {
+            this.connectPending = false;
+            if (this.isUnmounted) {
+                return;
+            }
+            this.setState({
+                activeRoom: {roomId, name},
+                initialized: false,
+                swarmInitialized: false,
+                peerStreams: {},
+                playBacks: {},
+                audioOn: false,
+                audioEnabled: true,
+                videoEnabled: false,
+            });
+        });
+    };
+
+    handleCreateChannel = (e) => {
+        if (e && e.preventDefault) {
+            e.preventDefault();
+        }
+        const name = (this.state.newChannelNameDraft || '').trim();
+        if (!name) {
+            return;
+        }
+        const roomId = genRoomId();
+        this.mergeRoom({roomId, name, ts: Date.now()});
+        this.announceRoom(roomId, name);
+        this.setState({
+            showCreateInput: false,
+            newChannelNameDraft: '',
+        }, () => {
+            this.handleJoinRoom(roomId, name)();
+        });
+    };
+
+    handleToggleCreate = (e) => {
+        if (e && e.preventDefault) {
+            e.preventDefault();
+        }
+        this.setState((p) => ({
+            showCreateInput: !p.showCreateInput,
+            newChannelNameDraft: p.showCreateInput ? '' : p.newChannelNameDraft,
+        }));
+    };
 
     async handleRequestPerms() {
         const {myStream, audioEnabled, videoEnabled} = await getMyStream();
         debug({audioEnabled, videoEnabled});
+        this.currentMyStream = myStream;
         this.setState({initialized: true, myStream, audioEnabled, videoEnabled});
     }
 
-    async handleSetUserId(userId) {
-        this.setState({
-            userId,
-        });
-
-        this.connectToSwarm(userId);
-    }
-
     connectToSwarm(userId) {
+        const {activeRoom} = this.state;
         const {
-            myUuid,
-            myUsername,
             stunServer,
             turnServer,
             turnServerUsername,
@@ -113,16 +362,24 @@ class AudioCallPanel extends React.Component {
             configLoaded,
             config,
         } = this.props;
-        const roomCode = `mattermost-webrtc-video-${config.DiagnosticId}`;
-        debug('Room', roomCode);
-        const iceServers = buildIceServers(stunServer, turnServer, turnServerUsername, turnServerCredential);
 
-        if (!configLoaded) {
+        if (!configLoaded || !activeRoom || !config || !config.DiagnosticId) {
             return;
         }
 
-        const hub = pluginSignalHub(roomCode);
+        if (this.swarmInstance || this.connectPending) {
+            return;
+        }
 
+        this.connectPending = true;
+
+        const myUuid = this.props.userId;
+        const myUsername = this.props.username;
+        const voiceHubName = `mattermost-webrtc-video-${config.DiagnosticId}-voice-${activeRoom.roomId}`;
+        debug('Voice hub', voiceHubName);
+        const iceServers = buildIceServers(stunServer, turnServer, turnServerUsername, turnServerCredential);
+
+        const hub = pluginSignalHub(voiceHubName);
         hub.subscribe('all').on('data', this.handleHubData.bind(this));
 
         const sw = swarm(
@@ -133,33 +390,28 @@ class AudioCallPanel extends React.Component {
                 wrap: (outgoingSignalingData) => {
                     outgoingSignalingData.fromUserId = userId;
                     outgoingSignalingData.fromUsername = myUsername;
-
                     return outgoingSignalingData;
                 },
             },
         );
 
+        this.swarmInstance = sw;
+        this.connectPending = false;
+
         sw.on('peer', this.handleConnect.bind(this));
-
         sw.on('disconnect', this.handleDisconnect.bind(this));
-        debug('Before Broadcast', myUsername);
 
-        // Send initial connect signal
-        hub.broadcast(
-            roomCode,
-            {
-                fromUsername: myUsername,
-
-                type: 'connect',
-                from: myUuid,
-                fromUserId: userId,
-
-            },
-        );
+        hub.broadcast('all', {
+            type: 'connect',
+            from: myUuid,
+            fromUserId: userId,
+            fromUsername: myUsername,
+        });
     }
 
     handleHubData(message) {
-        const {swarmInitialized, myUuid, peerStreams} = this.state;
+        const {swarmInitialized, peerStreams} = this.state;
+        const myUuid = this.props.userId;
 
         if (!swarmInitialized) {
             this.setState({swarmInitialized: true});
@@ -174,13 +426,15 @@ class AudioCallPanel extends React.Component {
                 this.setState({peerStreams: newPeerStreams});
 
                 setTimeout(() => {
-                    const {peerStreams} = this.state;
-
-                    if (peerStreams[message.from] && !peerStreams[message.from].connected) {
-                        const newPeerStreams = Object.assign({}, peerStreams);
-                        delete newPeerStreams[message.from];
-                        this.setState({peerStreams: newPeerStreams});
-                    }
+                    this.setState((prev) => {
+                        const ps = prev.peerStreams;
+                        if (ps[message.from] && !ps[message.from].connected) {
+                            const next = Object.assign({}, ps);
+                            delete next[message.from];
+                            return {peerStreams: next};
+                        }
+                        return null;
+                    });
                 }, 20000);
             }
         }
@@ -201,12 +455,12 @@ class AudioCallPanel extends React.Component {
         this.setState({peerStreams});
 
         peer.on('stream', (stream) => {
-            const peerStreams = Object.assign({}, this.state.peerStreams);
+            const nextPeers = Object.assign({}, this.state.peerStreams);
             debug('received stream', stream);
-            peerStreams[id].stream = stream;
-            this.setState({peerStreams});
+            nextPeers[id].stream = stream;
+            this.setState({peerStreams: nextPeers});
             const playBacks = Object.assign({}, this.state.playBacks);
-            const aud = new Audio();
+            const aud = document.createElement('audio');
             aud.srcObject = stream;
             playBacks[id] = aud;
             aud.play();
@@ -215,15 +469,13 @@ class AudioCallPanel extends React.Component {
         });
 
         peer.on('data', (payload) => {
-            const {myStream} = this.state;
-
             const data = JSON.parse(payload.toString());
 
             debug('received data', {id, data});
 
             if (data.type === 'receivedHandshake') {
-                if (myStream) {
-                    peer.addStream(myStream);
+                if (this.currentMyStream) {
+                    peer.addStream(this.currentMyStream);
                 }
 
                 if (!audioOn || !audioEnabled) {
@@ -235,23 +487,23 @@ class AudioCallPanel extends React.Component {
             }
 
             if (data.type === 'sendHandshake') {
-                const peerStreams = Object.assign({}, this.state.peerStreams);
-                peerStreams[id].userId = data.userId;
-                peerStreams[id].connected = true;
+                const ps = Object.assign({}, this.state.peerStreams);
+                ps[id].userId = data.userId;
+                ps[id].connected = true;
                 peer.send(JSON.stringify({type: 'receivedHandshake'}));
-                this.setState({peerStreams});
+                this.setState({peerStreams: ps});
             }
 
             if (data.type === 'audioToggle') {
-                const peerStreams = Object.assign({}, this.state.peerStreams);
-                peerStreams[id].audioOn = data.enabled;
-                this.setState({peerStreams});
+                const ps = Object.assign({}, this.state.peerStreams);
+                ps[id].audioOn = data.enabled;
+                this.setState({peerStreams: ps});
             }
 
             if (data.type === 'videoToggle') {
-                const peerStreams = Object.assign({}, this.state.peerStreams);
-                peerStreams[id].videoOn = data.enabled;
-                this.setState({peerStreams});
+                const ps = Object.assign({}, this.state.peerStreams);
+                ps[id].videoOn = data.enabled;
+                this.setState({peerStreams: ps});
             }
         });
 
@@ -273,13 +525,16 @@ class AudioCallPanel extends React.Component {
     }
 
     handleAudioToggle() {
-        const {peerStreams, myStream, audioOn} = this.state;
-        if (myStream) {
-            myStream.getAudioTracks()[0].enabled = !audioOn;
+        const {peerStreams, audioOn} = this.state;
+        if (this.currentMyStream) {
+            const tracks = this.currentMyStream.getAudioTracks();
+            if (tracks[0]) {
+                tracks[0].enabled = !audioOn;
+            }
 
-            for (const id of Object.keys(peerStreams)) {
-                const peerStream = peerStreams[id];
-                if (peerStream.connected) {
+            for (const pid of Object.keys(peerStreams)) {
+                const peerStream = peerStreams[pid];
+                if (peerStream.connected && peerStream.peer) {
                     peerStream.peer.send(JSON.stringify({type: 'audioToggle', enabled: !audioOn}));
                 }
             }
@@ -306,60 +561,156 @@ class AudioCallPanel extends React.Component {
 
     render() {
         const {
-            userId, initialized, swarmInitialized, audioOn, speakerOn, peerStreams,
+            userId,
+            initialized,
+            swarmInitialized,
+            audioOn,
+            speakerOn,
+            peerStreams,
+            activeRoom,
+            channelList,
+            showCreateInput,
+            newChannelNameDraft,
         } = this.state;
         const style = getStyle();
 
         debug('Render', userId, initialized, swarmInitialized, this.state, this.props);
 
-        if (audioOn && !initialized) {
+        if (activeRoom && audioOn && !initialized) {
             this.handleRequestPerms();
         }
 
-        if (initialized && !swarmInitialized) {
+        if (activeRoom && initialized && !swarmInitialized && !this.connectPending && !this.swarmInstance) {
             this.connectToSwarm(userId);
         }
+
         return (
             <div style={style.container}>
-                <div style={style.flexContainer}>
-                    <p
-                        style={style.text}
-                    >{'VOICE CHANNEL'}</p>
-                    <i
-                        className={audioOn ? 'icon fa fa-microphone fa-lg' : 'icon fa fa-microphone-slash  fa-lg'}
-                        style={style.button}
-                        onClick={this.handleAudioToggle.bind(this)}
-                    />
-                    <i
-                        className={speakerOn ? 'icon fa fa-volume-up fa-lg' : 'icon fa fa-volume-off fa-lg'}
-                        style={style.button}
-                        onClick={this.handleSpeakerToggle.bind(this)}
-                    />
-                </div>
-                <ul style={style.list}>
-                    {swarmInitialized && (
-                        <li
-                            style={style.listItem}
+                {!activeRoom && (
+                    <div style={style.section}>
+                        <div style={style.sectionHeader}>
+                            <span style={style.sectionTitle}>{'Voice channels'}</span>
+                            <button
+                                type='button'
+                                style={style.linkBtn}
+                                onClick={this.handleToggleCreate}
+                            >
+                                {showCreateInput ? 'Cancel' : '+ New'}
+                            </button>
+                        </div>
+                        {showCreateInput && (
+                            <div style={style.createBox}>
+                                <label
+                                    htmlFor='webrtc-voice-channel-name'
+                                    style={style.label}
+                                >
+                                    {'Name this voice channel'}
+                                </label>
+                                <input
+                                    id='webrtc-voice-channel-name'
+                                    type='text'
+                                    style={style.input}
+                                    placeholder='e.g. Standup, Sprint planning…'
+                                    value={newChannelNameDraft}
+                                    onChange={(ev) => this.setState({newChannelNameDraft: ev.target.value})}
+                                    onKeyDown={(ev) => {
+                                        if (ev.key === 'Enter') {
+                                            this.handleCreateChannel(ev);
+                                        }
+                                    }}
+                                />
+                                <button
+                                    type='button'
+                                    style={style.primaryBtn}
+                                    onClick={this.handleCreateChannel}
+                                >
+                                    {'Create and join'}
+                                </button>
+                            </div>
+                        )}
+                        <ul style={style.roomList}>
+                            {channelList.length === 0 && !showCreateInput && (
+                                <li style={style.roomHint}>{'No channels yet — create one or wait for a teammate to announce one.'}</li>
+                            )}
+                            {channelList.map((r) => (
+                                <li
+                                    key={r.roomId}
+                                    style={style.roomRow}
+                                >
+                                    <span style={style.roomName}>{r.name}</span>
+                                    <button
+                                        type='button'
+                                        style={style.joinBtn}
+                                        onClick={this.handleJoinRoom(r.roomId, r.name)}
+                                    >
+                                        {'Join'}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
 
-                            key={0}
-                        >
+                {activeRoom && (
+                    <div style={style.section}>
+                        <div style={style.inRoomHeader}>
+                            <span style={style.inRoomTitle}>{activeRoom.name}</span>
+                            <button
+                                type='button'
+                                style={style.leaveBtn}
+                                onClick={this.handleLeaveRoom}
+                                title='Leave voice channel'
+                            >
+                                {'Leave'}
+                            </button>
+                        </div>
+                        <div style={style.flexContainer}>
                             <i
-                                className={'icon fa fa-circle'}
-                                style={style.online}
-                            />{'You'}</li>)}
-                    {Object.keys(peerStreams).map((id) => (
-                        <li
-                            key={id}
-                            style={style.listItem}
-                        >
-                            <i
-                                className={'icon fa fa-circle'}
-                                style={style.online}
+                                className={audioOn ? 'icon fa fa-microphone fa-lg' : 'icon fa fa-microphone-slash  fa-lg'}
+                                style={style.button}
+                                onClick={this.handleAudioToggle.bind(this)}
+                                role='button'
+                                tabIndex={0}
+                                onKeyDown={(ev) => ev.key === 'Enter' && this.handleAudioToggle()}
                             />
-                            {peerStreams[id].username}
-                        </li>
-                    ))}
-                </ul>
+                            <i
+                                className={speakerOn ? 'icon fa fa-volume-up fa-lg' : 'icon fa fa-volume-off fa-lg'}
+                                style={style.button}
+                                onClick={this.handleSpeakerToggle.bind(this)}
+                                role='button'
+                                tabIndex={0}
+                                onKeyDown={(ev) => ev.key === 'Enter' && this.handleSpeakerToggle()}
+                            />
+                        </div>
+                        <p style={style.hint}>{'Turn the microphone on to connect and speak.'}</p>
+                        <ul style={style.list}>
+                            {swarmInitialized && (
+                                <li
+                                    style={style.listItem}
+                                    key='self'
+                                >
+                                    <i
+                                        className={'icon fa fa-circle'}
+                                        style={style.online}
+                                    />
+                                    {'You'}
+                                </li>
+                            )}
+                            {Object.keys(peerStreams).map((id) => (
+                                <li
+                                    key={id}
+                                    style={style.listItem}
+                                >
+                                    <i
+                                        className={'icon fa fa-circle'}
+                                        style={style.online}
+                                    />
+                                    {peerStreams[id].username || id}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
         );
     }
@@ -388,35 +739,167 @@ const mapStateToProps = (state) => {
 export default connect(mapStateToProps)(AudioCallPanel);
 
 const getStyle = () => ({
+    container: {
+        padding: '4px 0 8px',
+    },
+    section: {
+        marginTop: 4,
+    },
+    sectionHeader: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 10px 6px',
+    },
+    sectionTitle: {
+        fontSize: '0.78em',
+        fontWeight: 700,
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+        color: 'rgba(255,255,255,0.65)',
+    },
+    linkBtn: {
+        border: 'none',
+        background: 'transparent',
+        color: '#5b9cf8',
+        cursor: 'pointer',
+        fontSize: '0.85em',
+        fontWeight: 600,
+        padding: '2px 4px',
+        fontFamily: 'inherit',
+    },
+    createBox: {
+        padding: '0 10px 10px',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        marginBottom: 8,
+    },
+    label: {
+        display: 'block',
+        fontSize: '0.82em',
+        color: 'rgba(255,255,255,0.85)',
+        marginBottom: 6,
+        fontWeight: 500,
+    },
+    input: {
+        width: '100%',
+        boxSizing: 'border-box',
+        padding: '8px 10px',
+        borderRadius: 4,
+        border: '1px solid rgba(255,255,255,0.2)',
+        background: 'rgba(0,0,0,0.25)',
+        color: '#fff',
+        fontSize: '0.9em',
+        marginBottom: 8,
+        fontFamily: 'inherit',
+    },
+    primaryBtn: {
+        width: '100%',
+        padding: '8px 12px',
+        borderRadius: 4,
+        border: 'none',
+        background: '#166de0',
+        color: '#fff',
+        fontWeight: 600,
+        cursor: 'pointer',
+        fontSize: '0.88em',
+        fontFamily: 'inherit',
+    },
+    roomList: {
+        listStyleType: 'none',
+        margin: 0,
+        padding: '0 10px',
+        maxHeight: '220px',
+        overflowY: 'auto',
+    },
+    roomRow: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 8,
+        padding: '6px 0',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        color: '#fff',
+        fontSize: '0.9em',
+    },
+    roomName: {
+        flex: 1,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+    },
+    joinBtn: {
+        flexShrink: 0,
+        padding: '4px 10px',
+        borderRadius: 4,
+        border: 'none',
+        background: 'rgba(91, 156, 248, 0.25)',
+        color: '#9ec5ff',
+        fontWeight: 600,
+        cursor: 'pointer',
+        fontSize: '0.82em',
+        fontFamily: 'inherit',
+    },
+    roomHint: {
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: '0.82em',
+        lineHeight: 1.35,
+        padding: '8px 0',
+    },
+    inRoomHeader: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 10px 8px',
+        gap: 8,
+    },
+    inRoomTitle: {
+        color: '#fff',
+        fontWeight: 600,
+        fontSize: '0.95em',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+    },
+    leaveBtn: {
+        flexShrink: 0,
+        padding: '4px 10px',
+        borderRadius: 4,
+        border: '1px solid rgba(255,255,255,0.25)',
+        background: 'transparent',
+        color: 'rgba(255,255,255,0.9)',
+        cursor: 'pointer',
+        fontSize: '0.82em',
+        fontFamily: 'inherit',
+    },
+    hint: {
+        margin: '0 10px 8px',
+        fontSize: '0.78em',
+        color: 'rgba(255,255,255,0.45)',
+        lineHeight: 1.3,
+    },
     button: {
         margin: '5px',
         color: 'white',
         flexGrow: '1',
         padding: '3px',
+        cursor: 'pointer',
     },
-    text: {
-        fontSize: '1em',
-        marginLeft: '13px',
-        marginTop: '5px',
-        marginBottom: '5px',
-        marginRight: '5px',
+    flexContainer: {
+        display: 'flex',
+        padding: '0 10px',
+    },
+    list: {
+        listStyleType: 'none',
+        margin: 0,
+        padding: '0 10px',
+    },
+    listItem: {
         color: 'white',
-        fontWeight: '600',
-        fontFamily: 'inherit',
-        flexGrow: '6',
-
+        fontSize: '0.88em',
+        padding: '2px 0',
     },
     online: {
         color: '#4cd6a1',
         marginRight: '10px',
-    },
-    listItem: {
-        color: 'white',
-    },
-    flexContainer: {
-        display: 'flex',
-    },
-    list: {
-        listStyleType: 'none',
     },
 });

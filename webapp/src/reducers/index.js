@@ -149,11 +149,40 @@ const callPeerId = (state = '', action) => {
     }
 };
 
+const activeCallId = (state = null, action) => {
+    switch (action.type) {
+    case ActionTypes.MAKE_VIDEO_CALL:
+    case ActionTypes.RECEIVE_VIDEO_CALL:
+        return (action.data && action.data.callId) || null;
+    case ActionTypes.REJECT_CALL:
+    case ActionTypes.END_CALL:
+    case ActionTypes.OUTGOING_CALL_DECLINED:
+        return null;
+    default:
+        return state;
+    }
+};
+
+const outgoingCallDeclined = (state = false, action) => {
+    switch (action.type) {
+    case ActionTypes.OUTGOING_CALL_DECLINED:
+        return true;
+    case ActionTypes.REJECT_CALL:
+    case ActionTypes.END_CALL:
+    case ActionTypes.MAKE_VIDEO_CALL:
+        return false;
+    default:
+        return state;
+    }
+};
+
 const peerAccepted = (state = false, action) => {
     switch (action.type) {
     case ActionTypes.PEER_ACCEPTED:
         return true;
     case ActionTypes.MAKE_VIDEO_CALL:
+        return false;
+    case ActionTypes.OUTGOING_CALL_DECLINED:
         return false;
     case ActionTypes.REJECT_CALL:
         return false;
@@ -254,6 +283,8 @@ export default combineReducers({
     callAccepted,
     peerAccepted,
     callPeerId,
+    activeCallId,
+    outgoingCallDeclined,
     callPeerStream,
     callPeerVideoOn,
     callPeerAudioOn,
