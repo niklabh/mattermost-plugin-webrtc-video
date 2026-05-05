@@ -34,9 +34,3 @@ export function buildIceServers(stunServer, turnServer, turnServerUsername, turn
 
     return out.length > 0 ? out : DEFAULT_STUN.slice();
 }
-
-export function signalhubEndpoints(signalhubURL) {
-    const u = String(signalhubURL || '').trim();
-    return u ? [u] : [];
-}
-

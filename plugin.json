@@ -9,7 +9,9 @@
     "server": {
         "executables": {
             "linux-amd64": "server/dist/plugin-linux-amd64",
+            "linux-arm64": "server/dist/plugin-linux-arm64",
             "darwin-amd64": "server/dist/plugin-darwin-amd64",
+            "darwin-arm64": "server/dist/plugin-darwin-arm64",
             "windows-amd64": "server/dist/plugin-windows-amd64.exe"
         }
     },
@@ -19,12 +21,6 @@
     "settings_schema": {
         "header": "The mattermost-webrtc-video plugin allows users to make P2P video calls.",
         "settings": [
-            {
-                "key": "SignalhubUrl",
-                "display_name": "Signalhub URL",
-                "type": "text",
-                "help_text": "Required. HTTPS URL of your signalhub server for call signalling (e.g. deploy https://github.com/mafintosh/signalhub). No default URL is provided."
-            },
             {
                 "key": "STUNServer",
                 "display_name": "STUN server",

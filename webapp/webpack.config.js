@@ -12,6 +12,9 @@ module.exports = {
             'node_modules',
         ],
         extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
+        alias: {
+            stream: require.resolve('stream-browserify'),
+        },
     },
     devtool: 'inline-source-map',
     module: {

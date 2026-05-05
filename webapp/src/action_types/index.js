@@ -19,4 +19,6 @@ export default {
     SELF_STREAM_UNSET: pluginId + '_self_stream_unset_',
     AUDIO_TOGGLE: pluginId + '_audio_toggle',
     VIDEO_TOGGLE: pluginId + '_video_toggle',
+    OPEN_VIDEO_CALL_PICKER: pluginId + '_open_video_call_picker',
+    CLOSE_VIDEO_CALL_PICKER: pluginId + '_close_video_call_picker',
 };

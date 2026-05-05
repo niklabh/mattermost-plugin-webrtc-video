@@ -5,10 +5,10 @@ import React from 'react';
 import {getCurrentUser, getProfiles} from 'mattermost-redux/selectors/entities/users';
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import PropTypes from 'prop-types';
-import signalhub from 'signalhub';
 import swarm from 'webrtc-swarm';
 
-import {buildIceServers, signalhubEndpoints} from '../../../utils/iceServers';
+import pluginSignalHub from '../../../utils/pluginSignalHub';
+import {buildIceServers} from '../../../utils/iceServers';
 import debug from '../../../utils/debug';
 import {id as pluginId} from 'manifest';
 
@@ -40,9 +40,14 @@ async function getMyStream() {
 
 class AudioCallPanel extends React.Component {
     static propTypes = {
-        // eslint-disable-next-line react/no-unused-prop-types
-        getCurrentUser: PropTypes.func.isRequired,
         userId: PropTypes.string.isRequired,
+        username: PropTypes.string,
+        configLoaded: PropTypes.bool,
+        stunServer: PropTypes.string,
+        turnServer: PropTypes.string,
+        turnServerUsername: PropTypes.string,
+        turnServerCredential: PropTypes.string,
+        config: PropTypes.object,
     };
     constructor(props) {
         super(props);
@@ -51,7 +56,6 @@ class AudioCallPanel extends React.Component {
         const invalidRoom = false;
 
         const {
-            signalhubURL,
             stunServer,
             turnServer,
             turnServerUsername,
@@ -76,7 +80,6 @@ class AudioCallPanel extends React.Component {
             speakerOn: false,
             myUsername: props.username,
             configLoaded,
-            signalhubURL,
             stunServer,
             turnServer,
             turnServerUsername,
@@ -103,7 +106,6 @@ class AudioCallPanel extends React.Component {
         const {
             myUuid,
             myUsername,
-            signalhubURL,
             stunServer,
             turnServer,
             turnServerUsername,
@@ -119,13 +121,7 @@ class AudioCallPanel extends React.Component {
             return;
         }
 
-        const hubs = signalhubEndpoints(signalhubURL);
-        if (hubs.length === 0) {
-            debug('Voice channel disabled: set Signalhub URL in plugin settings.');
-            return;
-        }
-
-        const hub = signalhub(roomCode, hubs);
+        const hub = pluginSignalHub(roomCode);
 
         hub.subscribe('all').on('data', this.handleHubData.bind(this));
 
@@ -372,7 +368,7 @@ class AudioCallPanel extends React.Component {
 const mapStateToProps = (state) => {
     const currentUser = getCurrentUser(state);
     const profiles = getProfiles(state);
-    const {configLoaded, signalhubURL, stunServer, turnServer, turnServerUsername, turnServerCredential} = state[`plugins-${pluginId}`];
+    const {configLoaded, stunServer, turnServer, turnServerUsername, turnServerCredential} = state[`plugins-${pluginId}`];
     const config = getConfig(state);
 
     return {
@@ -381,7 +377,6 @@ const mapStateToProps = (state) => {
         currentUser,
         profiles,
         configLoaded,
-        signalhubURL,
         stunServer,
         turnServer,
         turnServerUsername,

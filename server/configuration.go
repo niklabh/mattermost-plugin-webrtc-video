@@ -2,7 +2,6 @@ package main
 
 import (
 	"reflect"
-	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -19,9 +18,6 @@ import (
 // If you add non-reference types to your configuration struct, be sure to rewrite Clone as a deep
 // copy appropriate for your types.
 type configuration struct {
-	// Signalhub URL
-	SignalhubURL string
-
 	// STUN server
 	STUNServer string
 
@@ -40,14 +36,6 @@ type configuration struct {
 func (c *configuration) Clone() *configuration {
 	var clone = *c
 	return &clone
-}
-
-// IsValid checks that required fields are set for signalling.
-func (c *configuration) IsValid() error {
-	if strings.TrimSpace(c.SignalhubURL) == "" {
-		return errors.New("Signalhub URL must be set")
-	}
-	return nil
 }
 
 // getConfiguration retrieves the active configuration under lock, making it safe to use

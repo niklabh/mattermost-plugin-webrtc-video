@@ -11,15 +11,6 @@ const configLoaded = (state = false, action) => {
     }
 };
 
-const signalhubURL = (state = '', action) => {
-    switch (action.type) {
-    case ActionTypes.LOAD_CONFIG:
-        return action.data.SignalhubURL;
-    default:
-        return state;
-    }
-};
-
 const stunServer = (state = '', action) => {
     switch (action.type) {
     case ActionTypes.LOAD_CONFIG:
@@ -51,6 +42,28 @@ const turnServerCredential = (state = '', action) => {
     switch (action.type) {
     case ActionTypes.LOAD_CONFIG:
         return action.data.TURNServerCredential;
+    default:
+        return state;
+    }
+};
+
+const videoCallPickerOpen = (state = false, action) => {
+    switch (action.type) {
+    case ActionTypes.OPEN_VIDEO_CALL_PICKER:
+        return true;
+    case ActionTypes.CLOSE_VIDEO_CALL_PICKER:
+        return false;
+    default:
+        return state;
+    }
+};
+
+const videoCallPickerHintChannelId = (state = null, action) => {
+    switch (action.type) {
+    case ActionTypes.OPEN_VIDEO_CALL_PICKER:
+        return (action.data && action.data.hintChannelId) || null;
+    case ActionTypes.CLOSE_VIDEO_CALL_PICKER:
+        return null;
     default:
         return state;
     }
@@ -228,7 +241,8 @@ const videoOn = (state = true, action) => {
 
 export default combineReducers({
     configLoaded,
-    signalhubURL,
+    videoCallPickerOpen,
+    videoCallPickerHintChannelId,
     stunServer,
     turnServer,
     turnServerUsername,

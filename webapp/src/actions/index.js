@@ -3,7 +3,6 @@
 /* eslint-disable no-shadow */
 /* eslint-disable no-unused-vars */
 import axios from 'axios';
-import signalhub from 'signalhub';
 import swarm from 'webrtc-swarm';
 
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
@@ -14,10 +13,24 @@ import {id as pluginId} from 'manifest';
 import ActionTypes from '../action_types';
 
 import debug from '../utils/debug';
-import {buildIceServers, signalhubEndpoints} from '../utils/iceServers';
+import {buildIceServers} from '../utils/iceServers';
+import pluginSignalHub from '../utils/pluginSignalHub';
 
 let gStream;
 let cPeer;
+
+export function openVideoCallPicker(hintChannelId = null) {
+    return {
+        type: ActionTypes.OPEN_VIDEO_CALL_PICKER,
+        data: {hintChannelId},
+    };
+}
+
+export function closeVideoCallPicker() {
+    return {
+        type: ActionTypes.CLOSE_VIDEO_CALL_PICKER,
+    };
+}
 
 export function loadConfig() {
     return (dispatch, getState) => {
@@ -56,13 +69,15 @@ export function makeVideoCall(peerId) {
     return (dispatch, getState) => {
         const user = getCurrentUser(getState());
         const config = getConfig(getState());
-        const {configLoaded, signalhubURL, callIncoming, callOutgoing} = getState()[`plugins-${pluginId}`];
+        const {configLoaded, callIncoming, callOutgoing} = getState()[`plugins-${pluginId}`];
 
         if (!configLoaded) {
+            debug('Video call: plugin config not loaded. Check Network tab for /plugins/' + pluginId + '/v1/config');
             return;
         }
 
         if (!peerId) {
+            debug('Video call: open a 1:1 direct message (not a group or team channel).');
             return;
         }
 
@@ -78,17 +93,7 @@ export function makeVideoCall(peerId) {
             return;
         }
 
-        const {stunServer, turnServer, turnServerUsername, turnServerCredential} = getState()[`plugins-${pluginId}`];
-
-        const iceServers = buildIceServers(stunServer, turnServer, turnServerUsername, turnServerCredential);
-
-        const hubs = signalhubEndpoints(signalhubURL);
-        if (hubs.length === 0) {
-            debug('Cannot start call: set Signalhub URL in System Console → Plugins → WebRTC Video.');
-            return;
-        }
-
-        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}-call-${peerId}`, hubs);
+        const callhub = pluginSignalHub(`mattermost-webrtc-video-${config.DiagnosticId}-call-${peerId}`);
 
         debug(`calling ${peerId}`);
         callhub.broadcast(`call-${peerId}`, user.id);
@@ -138,7 +143,7 @@ export function receiveVideoCall(peerId) {
 export function listenVideoCall() {
     return (dispatch, getState) => {
         const config = getConfig(getState());
-        const {configLoaded, signalhubURL, callListening} = getState()[`plugins-${pluginId}`];
+        const {configLoaded, callListening} = getState()[`plugins-${pluginId}`];
 
         if (!configLoaded) {
             return;
@@ -154,15 +159,9 @@ export function listenVideoCall() {
             return;
         }
 
-        const hubs = signalhubEndpoints(signalhubURL);
-        if (hubs.length === 0) {
-            debug('Not listening for calls: Signalhub URL is not configured.');
-            return;
-        }
+        const callhub = pluginSignalHub(`mattermost-webrtc-video-${config.DiagnosticId}-call-${user.id}`);
 
-        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}-call-${user.id}`, hubs);
-
-        debug(`listening for calls for ${user.id} on ${signalhubURL}`);
+        debug(`listening for calls for ${user.id}`);
         callhub.subscribe(`call-${user.id}`).on('data', (peerId) => {
             debug(`call from ${peerId}`);
             receiveVideoCall(peerId)(dispatch, getState);
@@ -178,18 +177,13 @@ function listenAccept(userId, peerId) {
     return (dispatch, getState) => {
         const config = getConfig(getState());
         const user = getUser(getState(), userId);
-        const {configLoaded, signalhubURL, callPeerId} = getState()[`plugins-${pluginId}`];
+        const {configLoaded, callPeerId} = getState()[`plugins-${pluginId}`];
 
         if (!configLoaded) {
             return;
         }
 
-        const hubs = signalhubEndpoints(signalhubURL);
-        if (hubs.length === 0) {
-            return;
-        }
-
-        const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, hubs);
+        const accepthub = pluginSignalHub(`mattermost-webrtc-video-${config.DiagnosticId}`);
         accepthub.subscribe('all').on('data', ({...a}) => {
             debug('HUB DATA', a);
         });
@@ -208,7 +202,7 @@ function listenAccept(userId, peerId) {
 
             const iceServers = buildIceServers(stun2, turn2, tu2, tc2);
 
-            const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}-call-${callPeerId}`, hubs);
+            const callhub = pluginSignalHub(`mattermost-webrtc-video-${config.DiagnosticId}-call-${callPeerId}`);
             const sw = swarm(
                 callhub,
                 {
@@ -307,15 +301,9 @@ export function acceptCall() {
     return (dispatch, getState) => {
         const user = getCurrentUser(getState());
         const config = getConfig(getState());
-        const {signalhubURL, callPeerId, peerAccepted} = getState()[`plugins-${pluginId}`];
+        const {callPeerId, peerAccepted} = getState()[`plugins-${pluginId}`];
 
-        const hubs = signalhubEndpoints(signalhubURL);
-        if (hubs.length === 0) {
-            debug('Cannot accept call: Signalhub URL is not configured.');
-            return;
-        }
-
-        const accepthub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}`, hubs);
+        const accepthub = pluginSignalHub(`mattermost-webrtc-video-${config.DiagnosticId}`);
         accepthub.subscribe('all').on('data', ({...a}) => {
             debug('HUB DATA', a);
         });
@@ -325,7 +313,7 @@ export function acceptCall() {
 
         const iceServers = buildIceServers(stunServer, turnServer, turnServerUsername, turnServerCredential);
 
-        const callhub = signalhub(`mattermost-webrtc-video-${config.DiagnosticId}-call-${user.id}`, hubs);
+        const callhub = pluginSignalHub(`mattermost-webrtc-video-${config.DiagnosticId}-call-${user.id}`);
         const sw = swarm(
             callhub,
             {
