@@ -4,8 +4,8 @@
     "description": "Mattermost plugin for webRTC peer to peer video call.",
     "homepage_url": "https://github.com/niklabh/mattermost-plugin-webrtc-video",
     "support_url": "https://github.com/niklabh/mattermost-plugin-webrtc-video/issues",
-    "version": "1.0.3",
-    "min_server_version": "5.12.0",
+    "version": "1.1.0",
+    "min_server_version": "10.0.0",
     "server": {
         "executables": {
             "linux-amd64": "server/dist/plugin-linux-amd64",
@@ -23,7 +23,7 @@
                 "key": "SignalhubUrl",
                 "display_name": "Signalhub URL",
                 "type": "text",
-                "help_text": "Signalhub is used for call signalling (incoming call, call received, call ended, etc.). Example: https://signalhub.example.com/"
+                "help_text": "Required. HTTPS URL of your signalhub server for call signalling (e.g. deploy https://github.com/mafintosh/signalhub). No default URL is provided."
             },
             {
                 "key": "STUNServer",

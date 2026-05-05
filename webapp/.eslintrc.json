@@ -1,8 +1,16 @@
 {
   "extends": "eslint:recommended",
+  "parser": "@babel/eslint-parser",
   "parserOptions": {
-    "ecmaVersion": 8,
+    "ecmaVersion": 2022,
     "sourceType": "module",
+    "requireConfigFile": false,
+    "babelOptions": {
+      "presets": [
+        "@babel/preset-env",
+        "@babel/preset-react"
+      ]
+    },
     "ecmaFeatures": {
       "jsx": true,
       "impliedStrict": true,
@@ -10,7 +18,6 @@
       "experimentalObjectRestSpread": true
     }
   },
-  "parser": "babel-eslint",
   "plugins": [
     "react",
     "import"

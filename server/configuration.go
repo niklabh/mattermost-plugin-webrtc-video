@@ -2,6 +2,7 @@ package main
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -41,8 +42,11 @@ func (c *configuration) Clone() *configuration {
 	return &clone
 }
 
-// IsValid checks if all needed fields are set.
+// IsValid checks that required fields are set for signalling.
 func (c *configuration) IsValid() error {
+	if strings.TrimSpace(c.SignalhubURL) == "" {
+		return errors.New("Signalhub URL must be set")
+	}
 	return nil
 }
 

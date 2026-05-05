@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,7 +28,7 @@ func TestHandleConfigAuth(t *testing.T) {
 
 	result := w.Result()
 	assert.NotNil(result)
-	bodyBytes, err := ioutil.ReadAll(result.Body)
+	bodyBytes, err := io.ReadAll(result.Body)
 	assert.Nil(err)
 	bodyString := string(bodyBytes)
 
@@ -51,7 +51,7 @@ func TestHandleConfigAnonymous(t *testing.T) {
 
 	result := w.Result()
 	assert.NotNil(result)
-	bodyBytes, err := ioutil.ReadAll(result.Body)
+	bodyBytes, err := io.ReadAll(result.Body)
 	assert.Nil(err)
 	bodyString := string(bodyBytes)
 

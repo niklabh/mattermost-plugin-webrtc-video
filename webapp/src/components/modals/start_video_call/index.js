@@ -1,6 +1,6 @@
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
-import {getCurrentUser, getUsers} from 'mattermost-redux/selectors/entities/users';
+import {getCurrentUser, getUser} from 'mattermost-redux/selectors/entities/users';
 
 import {acceptCall, rejectCall, endCall, audioToggle, videoToggle} from '../../../actions';
 
@@ -18,7 +18,11 @@ const mapStateToProps = (state) => {
     let peer = {};
 
     if (peerId) {
-        peer = getUsers(state)[peerId];
+        peer = getUser(state, peerId);
+    }
+
+    if (!peer) {
+        peer = {};
     }
 
     return {
