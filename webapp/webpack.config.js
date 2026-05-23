@@ -1,5 +1,7 @@
 var path = require('path');
 
+var webpack = require('webpack');
+
 // const SRC = path.resolve(__dirname, 'node_modules');
 
 module.exports = {
@@ -11,11 +13,21 @@ module.exports = {
             'src',
             'node_modules',
         ],
-        extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        fallback: {
+            buffer: require.resolve('buffer/'),
+            util: require.resolve('util/'),
+            stream: require.resolve('stream-browserify'),
+        },
         alias: {
             stream: require.resolve('stream-browserify'),
         },
     },
+    plugins: [
+        new webpack.ProvidePlugin({
+            Buffer: ['buffer', 'Buffer'],
+        }),
+    ],
     devtool: 'inline-source-map',
     module: {
         rules: [
