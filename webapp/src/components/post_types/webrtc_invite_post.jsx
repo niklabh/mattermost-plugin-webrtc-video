@@ -2,11 +2,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import {bindActionCreators} from 'redux';
 
 import {getCurrentUserId, getUser} from 'mattermost-redux/selectors/entities/users';
 
-import {acceptCall, rejectCall} from '../../actions';
 import {WEBRTC_INVITE_PROPS_KEY} from '../../constants/callInvite';
 
 function parseInvite(post) {
@@ -38,22 +36,6 @@ class WebrtcInvitePost extends React.PureComponent {
         theme: PropTypes.object,
         currentUserId: PropTypes.string,
         callerName: PropTypes.string.isRequired,
-        acceptCall: PropTypes.func.isRequired,
-        rejectCall: PropTypes.func.isRequired,
-    };
-
-    handleAccept = (e) => {
-        if (e && e.preventDefault) {
-            e.preventDefault();
-        }
-        this.props.acceptCall();
-    };
-
-    handleDecline = (e) => {
-        if (e && e.preventDefault) {
-            e.preventDefault();
-        }
-        this.props.rejectCall();
     };
 
     render() {
@@ -66,8 +48,6 @@ class WebrtcInvitePost extends React.PureComponent {
         const t = theme || {};
         const border = t.centerChannelColor || '#333';
         const bg = t.centerChannelBg || '#fff';
-        const btnBg = t.buttonBg || '#166de0';
-        const btnFg = t.buttonColor || '#fff';
 
         const box = {
             marginTop: 8,
@@ -89,11 +69,11 @@ class WebrtcInvitePost extends React.PureComponent {
                 <div style={{fontWeight: 600, marginBottom: 8}}>
                     {'Video call'}
                 </div>
-                <div style={{fontSize: '0.92em', marginBottom: callee ? 10 : 0}}>
+                <div style={{fontSize: '0.92em'}}>
                     {callee && (
                         <span>
                             {callerName || 'Someone'}
-                            {' wants to start a video call.'}
+                            {' wants to start a video call. Use the call window to accept or decline.'}
                         </span>
                     )}
                     {caller && !callee && (
@@ -107,42 +87,6 @@ class WebrtcInvitePost extends React.PureComponent {
                         </span>
                     )}
                 </div>
-                {callee && inv.status === 'ringing' && (
-                    <div style={{display: 'flex', gap: 8, marginTop: 8}}>
-                        <button
-                            type='button'
-                            style={{
-                                flex: 1,
-                                padding: '8px 12px',
-                                borderRadius: 4,
-                                border: 'none',
-                                cursor: 'pointer',
-                                backgroundColor: '#d24b4b',
-                                color: '#fff',
-                                fontWeight: 600,
-                            }}
-                            onClick={this.handleDecline}
-                        >
-                            {'Decline'}
-                        </button>
-                        <button
-                            type='button'
-                            style={{
-                                flex: 1,
-                                padding: '8px 12px',
-                                borderRadius: 4,
-                                border: `1px solid ${btnBg}`,
-                                cursor: 'pointer',
-                                backgroundColor: btnBg,
-                                color: btnFg,
-                                fontWeight: 600,
-                            }}
-                            onClick={this.handleAccept}
-                        >
-                            {'Accept'}
-                        </button>
-                    </div>
-                )}
             </div>
         );
     }
@@ -160,9 +104,4 @@ const mapStateToProps = (state, ownProps) => {
     };
 };
 
-const mapDispatchToProps = (dispatch) => bindActionCreators({
-    acceptCall,
-    rejectCall,
-}, dispatch);
-
-export default connect(mapStateToProps, mapDispatchToProps)(WebrtcInvitePost);
+export default connect(mapStateToProps)(WebrtcInvitePost);

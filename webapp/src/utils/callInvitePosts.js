@@ -15,12 +15,12 @@ export function newCallId() {
 }
 
 /**
- * Post a visible DM message documenting the incoming call (CTAs rendered by custom post type).
+ * Post a visible DM message documenting the incoming call (accept/decline in the modal only).
  */
 export async function createVideoInvitePost(channelId, callerUser, calleeId, callId) {
     const label = peerDisplay(callerUser);
     const at = callerUser.username ? `@${callerUser.username}` : label;
-    const message = `**Incoming video call** — ${at} is calling you. Use the buttons on this message or the call popup to **Accept** or **Decline**.`;
+    const message = `**Incoming video call** — ${at} is calling you. Use the call window to accept or decline.`;
 
     await mattermostApiRequest({
         method: 'post',

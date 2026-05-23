@@ -205,8 +205,62 @@ class AudioCallPanel extends React.Component {
                     ts: msg.ts,
                 });
             }
+            if (msg && msg.type === 'voice-room-delete' && msg.roomId) {
+                this.removeRoom(msg.roomId, {persist: true, broadcast: false});
+            }
         });
     }
+
+    removeRoom(roomId, opts = {}) {
+        const persist = opts.persist !== false;
+        const {config} = this.props;
+
+        this.setState((prev) => {
+            const next = prev.channelList.filter((r) => r.roomId !== roomId);
+            if (persist && config && config.DiagnosticId) {
+                this.saveRooms(config.DiagnosticId, next);
+            }
+            return {channelList: next};
+        });
+
+        if (opts.broadcast) {
+            this.announceRoomDelete(roomId);
+        }
+    }
+
+    announceRoomDelete(roomId) {
+        const {config, configLoaded, userId} = this.props;
+        if (!configLoaded || !config || !config.DiagnosticId || !roomId) {
+            return;
+        }
+        const hubName = `mattermost-webrtc-video-${config.DiagnosticId}-voice-directory`;
+        const hub = pluginSignalHub(hubName);
+        hub.broadcast(DIRECTORY_CHANNEL, {
+            type: 'voice-room-delete',
+            roomId,
+            userId,
+            ts: Date.now(),
+        });
+        hub.close();
+    }
+
+    handleDeleteRoom = (roomId) => (e) => {
+        if (e && e.preventDefault) {
+            e.preventDefault();
+        }
+        if (e && e.stopPropagation) {
+            e.stopPropagation();
+        }
+        const {activeRoom} = this.state;
+        const finalize = () => {
+            this.removeRoom(roomId, {persist: true, broadcast: true});
+        };
+        if (activeRoom && activeRoom.roomId === roomId) {
+            this.leaveRoomInternal(finalize);
+        } else {
+            finalize();
+        }
+    };
 
     announceRoom(roomId, name) {
         const {config, configLoaded, userId} = this.props;
@@ -638,13 +692,24 @@ class AudioCallPanel extends React.Component {
                                     style={style.roomRow}
                                 >
                                     <span style={style.roomName}>{r.name}</span>
-                                    <button
-                                        type='button'
-                                        style={style.joinBtn}
-                                        onClick={this.handleJoinRoom(r.roomId, r.name)}
-                                    >
-                                        {'Join'}
-                                    </button>
+                                    <span style={style.roomActions}>
+                                        <button
+                                            type='button'
+                                            style={style.joinBtn}
+                                            onClick={this.handleJoinRoom(r.roomId, r.name)}
+                                        >
+                                            {'Join'}
+                                        </button>
+                                        <button
+                                            type='button'
+                                            style={style.deleteBtn}
+                                            title='Delete this voice channel for everyone'
+                                            aria-label={`Delete voice channel ${r.name}`}
+                                            onClick={this.handleDeleteRoom(r.roomId)}
+                                        >
+                                            <i className='fa fa-trash'/>
+                                        </button>
+                                    </span>
                                 </li>
                             ))}
                         </ul>
@@ -655,14 +720,24 @@ class AudioCallPanel extends React.Component {
                     <div style={style.section}>
                         <div style={style.inRoomHeader}>
                             <span style={style.inRoomTitle}>{activeRoom.name}</span>
-                            <button
-                                type='button'
-                                style={style.leaveBtn}
-                                onClick={this.handleLeaveRoom}
-                                title='Leave voice channel'
-                            >
-                                {'Leave'}
-                            </button>
+                            <span style={style.inRoomHeaderActions}>
+                                <button
+                                    type='button'
+                                    style={style.deleteChannelBtn}
+                                    onClick={this.handleDeleteRoom(activeRoom.roomId)}
+                                    title='Delete this voice channel for everyone and leave'
+                                >
+                                    {'Delete'}
+                                </button>
+                                <button
+                                    type='button'
+                                    style={style.leaveBtn}
+                                    onClick={this.handleLeaveRoom}
+                                    title='Leave voice channel'
+                                >
+                                    {'Leave'}
+                                </button>
+                            </span>
                         </div>
                         <div style={style.flexContainer}>
                             <i
@@ -826,9 +901,15 @@ const getStyle = () => ({
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+        minWidth: 0,
+    },
+    roomActions: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        flexShrink: 0,
     },
     joinBtn: {
-        flexShrink: 0,
         padding: '4px 10px',
         borderRadius: 4,
         border: 'none',
@@ -837,6 +918,17 @@ const getStyle = () => ({
         fontWeight: 600,
         cursor: 'pointer',
         fontSize: '0.82em',
+        fontFamily: 'inherit',
+    },
+    deleteBtn: {
+        padding: '4px 8px',
+        borderRadius: 4,
+        border: 'none',
+        background: 'rgba(210, 75, 75, 0.35)',
+        color: '#ffb4b4',
+        cursor: 'pointer',
+        fontSize: '0.85em',
+        lineHeight: 1,
         fontFamily: 'inherit',
     },
     roomHint: {
@@ -859,9 +951,26 @@ const getStyle = () => ({
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+        minWidth: 0,
+    },
+    inRoomHeaderActions: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        flexShrink: 0,
+    },
+    deleteChannelBtn: {
+        padding: '4px 10px',
+        borderRadius: 4,
+        border: 'none',
+        background: 'rgba(210, 75, 75, 0.45)',
+        color: '#fff',
+        cursor: 'pointer',
+        fontSize: '0.82em',
+        fontWeight: 600,
+        fontFamily: 'inherit',
     },
     leaveBtn: {
-        flexShrink: 0,
         padding: '4px 10px',
         borderRadius: 4,
         border: '1px solid rgba(255,255,255,0.25)',
