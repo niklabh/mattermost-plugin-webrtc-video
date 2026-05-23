@@ -7,5 +7,5 @@ var manifest = struct {
 	Version string
 }{
 	ID:      "mattermost-webrtc-video",
-	Version: "1.1.0",
+	Version: "2.0.1",
 }
