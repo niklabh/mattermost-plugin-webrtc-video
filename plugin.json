@@ -1,11 +1,11 @@
 {
     "id": "mattermost-webrtc-video",
     "name": "WebRTC Video",
-    "description": "Mattermost plugin for webRTC peer to peer video call.",
+    "description": "Peer-to-peer WebRTC video calls and voice channels for Mattermost.",
     "homepage_url": "https://github.com/niklabh/mattermost-plugin-webrtc-video",
     "support_url": "https://github.com/niklabh/mattermost-plugin-webrtc-video/issues",
     "icon_path": "assets/logo.png",
-    "version": "2.0.1",
+    "version": "2.1.0",
     "min_server_version": "10.0.0",
     "server": {
         "executables": {
@@ -20,7 +20,7 @@
         "bundle_path": "webapp/dist/main.js"
     },
     "settings_schema": {
-        "header": "The mattermost-webrtc-video plugin allows users to make P2P video calls.",
+        "header": "Peer-to-peer video calls and voice channels. Media flows directly between browsers; this server only relays signalling. Configure STUN/TURN so users behind NAT or firewalls can connect.",
         "settings": [
             {
                 "key": "STUNServer",
@@ -38,13 +38,28 @@
                 "key": "TURNServerUsername",
                 "display_name": "TURN server username",
                 "type": "text",
-                "help_text": "TURN server username."
+                "help_text": "Static TURN username. Ignored when a TURN shared secret is set."
             },
             {
                 "key": "TURNServerCredential",
                 "display_name": "TURN server credential",
                 "type": "text",
-                "help_text": "TURN server credential (password)."
+                "help_text": "Static TURN credential (password). Ignored when a TURN shared secret is set.",
+                "secret": true
+            },
+            {
+                "key": "TURNServerSharedSecret",
+                "display_name": "TURN shared secret",
+                "type": "text",
+                "secret": true,
+                "help_text": "Recommended. Shared secret for time-limited TURN credentials (TURN REST API, coturn `use-auth-secret` / `static-auth-secret`). When set, each user receives a short-lived username/password derived from this secret instead of the static credential above."
+            },
+            {
+                "key": "TURNCredentialTTLMinutes",
+                "display_name": "TURN credential lifetime (minutes)",
+                "type": "number",
+                "default": 720,
+                "help_text": "How long generated TURN credentials remain valid. Only used with a TURN shared secret. Minimum 60, default 720 (12 hours)."
             }
         ],
         "footer": "* To report an issue, make a suggestion or a contribution, [check the repository](https://github.com/niklabh/mattermost-plugin-webrtc-video)."

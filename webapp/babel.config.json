@@ -1,0 +1,10 @@
+{
+  "presets": [
+    ["@babel/preset-env", {
+      "targets": "chrome >= 110, firefox >= 115, safari >= 16, edge >= 110"
+    }],
+    ["@babel/preset-react", {
+      "runtime": "classic"
+    }]
+  ]
+}

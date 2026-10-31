@@ -1,57 +1,66 @@
 {
   "name": "mattermost-plugin-webrtc-video",
-  "version": "2.0.1",
-  "description": "Frontend for webrtc video audio call plugin.",
-  "main": "src/index.js",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Frontend for the WebRTC peer-to-peer video and voice call plugin.",
+  "main": "src/index.jsx",
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "scripts": {
     "build": "webpack --mode=production",
+    "build:watch": "webpack --mode=production --watch",
     "debug": "webpack --mode=none",
-    "lint": "eslint --ignore-pattern node_modules --ignore-pattern dist --ext .js --ext .jsx --ext tsx --ext ts . --quiet",
-    "fix": "eslint --ignore-pattern node_modules --ignore-pattern dist --ext .js --ext .jsx --ext tsx --ext ts . --quiet --fix",
+    "lint": "eslint --quiet .",
+    "fix": "eslint --quiet --fix .",
     "test": "jest --forceExit --detectOpenHandles --verbose"
   },
   "author": "",
-  "license": "",
+  "license": "Apache-2.0",
   "devDependencies": {
-    "@babel/eslint-parser": "^7.26.5",
-    "@babel/cli": "^7.26.4",
-    "@babel/core": "^7.29.6",
-    "@babel/plugin-proposal-class-properties": "^7.18.6",
-    "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
-    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
-    "@babel/polyfill": "^7.12.1",
-    "@babel/preset-env": "^7.26.0",
-    "@babel/preset-react": "^7.26.3",
-    "@babel/preset-typescript": "^7.26.0",
-    "@babel/runtime": "^7.26.0",
-    "@typescript-eslint/eslint-plugin": "^8.59.4",
-    "@typescript-eslint/parser": "^8.59.4",
-    "babel-loader": "^8.4.1",
-    "eslint": "^8.57.1",
-    "eslint-import-resolver-webpack": "^0.13.9",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-react": "^7.37.2",
-    "file-loader": "^6.2.0",
-    "jest": "^29.7.0",
-    "webpack": "^5.107.1",
-    "webpack-cli": "^5.1.4"
+    "@babel/core": "^8.0.10",
+    "@babel/eslint-parser": "^8.0.7",
+    "@babel/preset-env": "^8.0.7",
+    "@babel/preset-react": "^8.0.1",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "babel-jest": "^30.5.2",
+    "babel-loader": "^10.1.1",
+    "eslint": "^9.39.5",
+    "eslint-import-resolver-webpack": "^0.13.11",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.13.0",
+    "jest": "^30.5.2",
+    "jest-environment-jsdom": "^30.5.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "webpack": "^5.112.2",
+    "webpack-cli": "^7.3.1"
   },
   "dependencies": {
-    "@types/jest": "^29.5.14",
-    "@types/node": "^22.10.0",
-    "@types/react": "^16.14.62",
-    "@types/react-dom": "^16.9.24",
-    "axios": "0.33.0",
-    "mattermost-redux": "11.6.0",
+    "mattermost-redux": "11.9.0",
     "prop-types": "^15.8.1",
-    "react": "16.14.0",
-    "react-redux": "^5.1.2",
-    "redux": "^4.2.1",
-    "stream-browserify": "^3.0.0",
-    "buffer": "^6.0.3",
-    "util": "^0.12.5",
-    "tslib": "^2.8.1",
-    "typescript": "^5.7.2",
-    "webrtc-swarm": "github:tom-james-watson/webrtc-swarm"
+    "react-redux": "^9.3.0",
+    "redux": "^5.0.1"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testEnvironmentOptions": {
+      "url": "http://localhost:8065"
+    },
+    "moduleDirectories": [
+      "node_modules",
+      "src"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ],
+    "clearMocks": true,
+    "setupFilesAfterEnv": [
+      "@testing-library/jest-dom"
+    ]
   }
 }
