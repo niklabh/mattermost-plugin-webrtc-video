@@ -29,6 +29,14 @@ type configuration struct {
 
 	// TURN server credential
 	TURNServerCredential string
+
+	// TURNServerSharedSecret enables time-limited TURN credentials (the "TURN REST API" /
+	// coturn use-auth-secret scheme). When set, it takes precedence over the static
+	// username/credential pair, so long-lived TURN passwords are never sent to browsers.
+	TURNServerSharedSecret string
+
+	// TURNCredentialTTLMinutes is how long generated TURN credentials stay valid.
+	TURNCredentialTTLMinutes int
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if

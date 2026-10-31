@@ -80,7 +80,7 @@ func TestSignalPublishDeliversPayloadToSubscriber(t *testing.T) {
 
 	select {
 	case msg := <-ch:
-		assert.JSONEq(t, `{"hello":"world"}`, string(msg))
+		assert.JSONEq(t, `{"hello":"world","_sender":"user-1"}`, string(msg))
 	case <-time.After(time.Second):
 		t.Fatal("subscriber did not receive published payload")
 	}
@@ -98,7 +98,7 @@ func TestSignalPublishDefaultsMissingPayloadToEmptyObject(t *testing.T) {
 
 	select {
 	case msg := <-ch:
-		assert.Equal(t, "{}", string(msg))
+		assert.JSONEq(t, `{"_sender":"user-1"}`, string(msg))
 	case <-time.After(time.Second):
 		t.Fatal("subscriber did not receive defaulted payload")
 	}
@@ -220,7 +220,7 @@ func TestSignalStreamWritesSSEFramesForPublishedPayloads(t *testing.T) {
 
 	// Wait for both writes to land in the recorder.
 	require.Eventually(t, func() bool {
-		return strings.Count(w.body(), "\n\n") >= 2
+		return strings.Count(w.body(), "\n\n") >= 3 // preamble + two frames
 	}, time.Second, 5*time.Millisecond, "expected two SSE frames")
 
 	cancel()

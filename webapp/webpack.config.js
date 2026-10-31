@@ -1,79 +1,42 @@
-var path = require('path');
+const path = require('path');
 
-var webpack = require('webpack');
-
-// const SRC = path.resolve(__dirname, 'node_modules');
+const isProduction = process.argv.includes('--mode=production');
 
 module.exports = {
     entry: [
-        './src/index.js',
+        './src/index.jsx',
     ],
     resolve: {
         modules: [
             'src',
             'node_modules',
         ],
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
-        fallback: {
-            buffer: require.resolve('buffer/'),
-            util: require.resolve('util/'),
-            stream: require.resolve('stream-browserify'),
-        },
-        alias: {
-            stream: require.resolve('stream-browserify'),
-        },
+        extensions: ['.js', '.jsx'],
     },
-    plugins: [
-        new webpack.ProvidePlugin({
-            Buffer: ['buffer', 'Buffer'],
-        }),
-    ],
-    devtool: 'inline-source-map',
+    devtool: isProduction ? false : 'inline-source-map',
+    performance: {
+        hints: false,
+    },
     module: {
         rules: [
             {
-                test: /\.(js|jsx|ts|tsx)$/,
+                test: /\.(js|jsx)$/,
                 exclude: /node_modules/,
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        plugins: [
-                            '@babel/plugin-proposal-class-properties',
-                            '@babel/plugin-syntax-dynamic-import',
-                            '@babel/plugin-proposal-object-rest-spread',
-                        ],
-                        presets: [
-                            ['@babel/preset-env', {
-                                targets: {
-                                    chrome: 66,
-                                    firefox: 60,
-                                    edge: 42,
-                                    safari: 12,
-                                },
-                                modules: false,
-                                debug: false,
-                                useBuiltIns: 'usage',
-                                shippedProposals: true,
-                            }],
-                            ['@babel/preset-react', {
-                                useBuiltIns: true,
-                            }],
-                            ['@babel/typescript', {
-                                allExtensions: true,
-                                isTSX: true,
-                            }],
-                        ],
+                        cacheDirectory: true,
                     },
                 },
             },
-            {
-                test: /\.(wav|mp3)$/,
-                loader: 'file-loader',
-            },
         ],
     },
+
+    // Libraries provided by the Mattermost web app on `window`.
+    // See https://docs.mattermost.com/developers/integrate/reference/webapp
     externals: {
         react: 'React',
+        'react-dom': 'ReactDOM',
         redux: 'Redux',
         'react-redux': 'ReactRedux',
         'prop-types': 'PropTypes',

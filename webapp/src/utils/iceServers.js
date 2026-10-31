@@ -1,5 +1,5 @@
 /**
- * Build RTCIceServer[] for RTCPeerConnection / simple-peer / webrtc-swarm.
+ * Build RTCIceServer[] for RTCPeerConnection.
  * Uses only STUN in the default set (no third-party TURN credentials baked into the plugin).
  */
 const DEFAULT_STUN = [
